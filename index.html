@@ -1027,75 +1027,8 @@ function removeHabitDialog() {
 }
 
 /* ===================== 信息日报 ===================== */
-const NEWS_RSS = [
-  { name: '华尔街见闻', cat: '金融',  url: 'https://wallstreetcn.com/rss' },
-  { name: '36氪',      cat: '财经',  url: 'https://36kr.com/feed' },
-  { name: '财新网',    cat: '财经',  url: 'https://www.caixin.com/rss/' },
-  { name: '第一财经',  cat: '财经',  url: 'https://www.yicai.com/rss/' },
-  { name: '中国政府网', cat: '政策', url: 'http://www.gov.cn/zhengce/zuixin/zhengcefabu/zhengcefabu/rss.xml' },
-  { name: '新华网财经', cat: '财经', url: 'http://www.news.cn/fortune/rss.xml' },
-  { name: '证券时报',  cat: '金融',  url: 'https://www.stcn.com/rss/' },
-  { name: '凤凰财经',  cat: '财经',  url: 'https://ishare.ifeng.com/rss/' }
-];
-
-async function fetchOneRSS(src) {
-  const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(src.url) + '&t=' + Date.now();
-  try {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 10000);
-    const r = await fetch(proxy, { signal: ctl.signal, cache: 'no-store' });
-    clearTimeout(timer);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
-    if (!j || !j.contents) throw new Error('no contents');
-    const doc = new DOMParser().parseFromString(j.contents, 'text/xml');
-    const items = [...doc.querySelectorAll('item')].slice(0, 6);
-    const out = items.map(it => {
-      const title = (it.querySelector('title')?.textContent || '').trim();
-      let link = (it.querySelector('link')?.textContent || '').trim();
-      if (!link) {
-        const guid = it.querySelector('guid')?.textContent?.trim();
-        if (guid) link = guid;
-      }
-      const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
-      let ts = pubDate ? Date.parse(pubDate) : NaN;
-      if (isNaN(ts)) ts = Date.now();
-      const descNode = it.querySelector('description')?.textContent || '';
-      const desc = descNode.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').slice(0, 160).trim();
-      return { title, link, ts, desc, source: src.name, cat: src.cat };
-    }).filter(x => x.title && x.link);
-    return out;
-  } catch (e) {
-    console.warn('RSS fail', src.name, e.message);
-    return [];
-  }
-}
-
-async function batchFetchNews() {
-  const all = await Promise.all(NEWS_RSS.map(fetchOneRSS));
-  const flat = all.flat();
-  // 仅保留当日新闻（24h 内或与今日同日）
-  const now = Date.now();
-  const oneDay = 24 * 3600 * 1000;
-  const todayKeyDate = todayKey();
-  const recent = flat.filter(n => (now - n.ts) <= oneDay * 2 || fmtDateKey(n.ts) === todayKeyDate);
-  const list = (recent.length >= 10 ? recent : flat).slice();
-  list.sort((a, b) => b.ts - a.ts);
-  const seen = new Set();
-  const dedup = [];
-  list.forEach(n => {
-    const k = (n.source + '|' + n.title).replace(/\s+/g, '').slice(0, 60);
-    if (seen.has(k)) return;
-    seen.add(k);
-    dedup.push(n);
-  });
-  return dedup.slice(0, 40);
-}
-
-function fmtDateKey(ts) {
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
+// 要闻由服务器每小时聚合生成 news.json（见仓库 build_news.py + GitHub Actions），
+// 网页直接读取同域 news.json，无需浏览器端 CORS 代理。
 
 // 服务器端每小时聚合好的要闻（同域托管，无需 CORS 代理）
 const NEWS_JSON_URL = 'https://j-dominate.github.io/j-workbench/news.json';
