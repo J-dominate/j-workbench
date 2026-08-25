@@ -1097,16 +1097,25 @@ function fmtDateKey(ts) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+// 服务器端每小时聚合好的要闻（同域托管，无需 CORS 代理）
+const NEWS_JSON_URL = 'https://j-dominate.github.io/j-workbench/news.json';
+
 async function importTodayNews() {
   const btn = $('#fetchNewsBtn');
   if (!btn) return;
   const origTxt = '🔄 一键抓取今日要闻（≥10 条）';
   btn.disabled = true;
-  btn.textContent = '⏳ 正在抓取 ' + NEWS_RSS.length + ' 个源...';
-  let list = [];
-  try { list = await batchFetchNews(); } catch (e) { list = []; }
-  if (list.length === 0) {
-    toast('抓取失败：CORS 代理或 RSS 源暂时不可用，稍后再试');
+  btn.textContent = '⏳ 正在拉取最新要闻...';
+  let data = null;
+  try {
+    const r = await fetch(NEWS_JSON_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    data = await r.json();
+  } catch (e) {
+    console.warn('news.json 拉取失败', e);
+  }
+  if (!data || !Array.isArray(data.items) || data.items.length === 0) {
+    toast('暂无可拉取的要闻：聚合数据可能正在生成，稍后重试');
     btn.disabled = false;
     btn.textContent = origTxt;
     return;
@@ -1116,7 +1125,7 @@ async function importTodayNews() {
     DB.news.filter(n => n.date === today).map(n => (n.source + '|' + n.title).replace(/\s+/g, '').slice(0, 60))
   );
   let added = 0;
-  list.forEach(n => {
+  data.items.forEach(n => {
     const k = (n.source + '|' + n.title).replace(/\s+/g, '').slice(0, 60);
     if (existingKey.has(k)) return;
     DB.news.push({
@@ -1125,8 +1134,8 @@ async function importTodayNews() {
       cat: n.cat,
       title: n.title,
       link: n.link,
-      desc: n.desc,
-      ts: n.ts,
+      desc: n.desc || '',
+      ts: n.ts || Date.now(),
       imported: true,
       date: today
     });
@@ -1135,9 +1144,9 @@ async function importTodayNews() {
   });
   saveDB();
   render();
-  toast(`已抓取 ${list.length} 条，新增 ${added} 条`);
+  toast(`已拉取 ${data.items.length} 条，新增 ${added} 条`);
   btn.disabled = false;
-  btn.textContent = `✓ 已更新（最新 ${list.length} 条 / 新增 ${added}）`;
+  btn.textContent = `✓ 已更新（最新 ${data.items.length} 条 / 新增 ${added}）`;
   setTimeout(() => { btn.textContent = origTxt; }, 6000);
 }
 
@@ -1149,7 +1158,7 @@ function renderNews() {
   const summary = el('div', { class: 'news-summary' },
     el('div', {}, el('div', { class: 'big-num' }, todayCount), el('div', { class: 'lab' }, '今日已收录')),
     el('div', {}, el('div', { class: 'big-num' }, DB.news.length), el('div', { class: 'lab' }, '累计收录')),
-    el('div', {}, el('div', { class: 'big-num' }, NEWS_RSS.length), el('div', { class: 'lab' }, 'RSS 数据源'))
+    el('div', {}, el('div', { class: 'big-num' }, '10+'), el('div', { class: 'lab' }, '自动聚合源'))
   );
   wrap.appendChild(summary);
 
@@ -1163,8 +1172,8 @@ function renderNews() {
   );
   wrap.appendChild(toolbar);
   wrap.appendChild(el('div', { class: 'news-rss-hint' },
-    el('span', {}, '· 数据源：'),
-    ...NEWS_RSS.map(s => el('span', { class: 'tag gray', title: s.url }, s.name))
+    el('span', {}, '· 要闻由服务器每小时自动聚合 10+ 个国内财经/政策/金融源，点击上方按钮即可同步到今日。'),
+    el('a', { class: 'tag gray', href: 'https://github.com/J-dominate/j-workbench/actions', target: '_blank', rel: 'noopener', style: { cursor: 'pointer' } }, '查看聚合状态')
   ));
 
   // 列表
