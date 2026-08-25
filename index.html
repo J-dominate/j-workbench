@@ -81,19 +81,40 @@
   .main::-webkit-scrollbar-thumb { background: rgba(17,24,39,0.12); border-radius: 4px; }
 
   /* ----- 主页问候 ----- */
-  .greeting { text-align: center; margin: 26px 0 48px; }
+  .greeting {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 30px 0 42px;
+    padding-left: 4px;
+  }
   .greeting .name {
-    font-size: 30px; font-weight: 700; color: var(--text);
-    cursor: pointer; display: inline-block; padding: 2px 10px;
-    border-radius: 8px; transition: background 0.15s;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    display: inline-block;
+    padding: 2px 10px 4px;
+    border-radius: 8px;
+    letter-spacing: 1px;
+    transition: background 0.15s;
+    line-height: 1.1;
   }
   .greeting .name:hover { background: var(--bg-hover); }
   .greeting .slogan {
-    margin-top: 8px; font-size: 42px; font-weight: 800;
+    margin-top: 6px;
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.1;
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text; letter-spacing: 3px; cursor: pointer;
-    display: inline-block; padding: 4px 14px; border-radius: 10px;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 4px;
+    cursor: pointer;
+    display: inline-block;
+    padding: 2px 12px 6px;
+    border-radius: 10px;
     transition: filter 0.15s;
   }
   .greeting .slogan:hover { filter: brightness(1.05); }
@@ -229,27 +250,108 @@
   .task-row .text-input:focus { border-color: var(--accent); }
 
   /* 习惯打卡 */
-  .habit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .habit-card {
-    background: var(--bg-3); border: 1px solid var(--border); border-radius: 12px;
-    padding: 18px; display: flex; align-items: center; gap: 14px;
+  .habit-list { background: var(--bg-3); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .habit-row {
+    display: grid; grid-template-columns: minmax(120px, 200px) 1fr; gap: 16px; align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
   }
-  .habit-card .emoji { font-size: 30px; line-height: 1; }
-  .habit-card .h-info { flex: 1; }
-  .habit-card .h-name { font-size: 15px; font-weight: 600; color: var(--text); }
-  .habit-card .h-meta { font-size: 12px; color: var(--text-2); margin-top: 2px; }
-  .habit-card .h-check {
-    width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border-strong);
-    display: flex; align-items: center; justify-content: center; font-size: 16px; color: transparent;
-    cursor: pointer; transition: all 0.18s; flex-shrink: 0;
+  .habit-row:last-child { border-bottom: none; }
+  .habit-left .h-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .habit-left .h-sub { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+  .habit-controls { display: flex; gap: 14px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+  .cup-check, .check-toggle {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 13px; color: var(--text-2); user-select: none;
   }
-  .habit-card .h-check.done { background: var(--success); border-color: var(--success); color: #fff; }
+  .cup-check input, .check-toggle input {
+    width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent);
+  }
+  .cup-check.done, .check-toggle.done { color: var(--text); font-weight: 500; }
+  .habit-time {
+    padding: 5px 8px; border: 1px solid var(--border-strong); border-radius: 6px;
+    font-size: 13px; background: var(--bg-1); outline: none;
+  }
+  .habit-time:focus { border-color: var(--accent); }
+  .habit-note {
+    padding: 5px 12px; border: 1px solid var(--border-strong); border-radius: 6px;
+    font-size: 13px; background: var(--bg-1); width: 160px; outline: none;
+  }
+  .habit-note:focus { border-color: var(--accent); }
+  .habit-7d {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .habit-7d th, .habit-7d td {
+    padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .habit-7d th { color: var(--text-2); font-weight: 500; font-size: 12px; text-align: right; }
+  .habit-7d th:first-child { text-align: left; color: var(--text); font-weight: 600; }
+  .habit-7d td { text-align: right; color: var(--text-3); }
+  .habit-7d td:first-child { text-align: left; color: var(--text); }
+  .habit-7d td.done { color: var(--success); font-weight: 600; }
+  .habit-7d tr.today td:first-child { color: var(--accent); font-weight: 600; }
+  .habit-7d tr:last-child td { border-bottom: none; }
+
+  /* 复盘 */
+  .replay-card { padding: 22px 24px; }
+  .replay-today-tag { font-size: 13px; color: var(--text-2); margin-bottom: 16px; }
+  .replay-kiss { display: flex; flex-direction: column; }
+  .kiss-block {
+    padding: 14px 0 10px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .kiss-block:last-of-type { border-bottom: none; }
+  .kiss-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .kiss-hint { font-size: 12px; color: var(--text-2); margin-bottom: 10px; }
+  .kiss-ta {
+    width: 100%; border: 1px solid var(--border-strong); border-radius: 8px;
+    padding: 10px 12px; font-size: 14px; line-height: 1.6;
+    background: var(--bg-1); color: var(--text); resize: vertical; outline: none;
+    min-height: 44px; font-family: inherit;
+  }
+  .kiss-ta:focus { border-color: var(--accent); }
+  .kiss-add {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; margin-top: 8px;
+    border: 1px solid var(--border-strong); border-radius: 50%;
+    color: var(--text-2); font-size: 18px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .kiss-add:hover { border-color: var(--accent); color: var(--accent); }
+  .kiss-mood { padding-top: 18px; margin-top: 6px; border-top: 1px solid var(--border); }
+  .mood-picker { display: flex; gap: 14px; align-items: center; margin-top: 10px; }
+  .mood-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--bg-1); cursor: pointer; font-size: 26px;
+    transition: all 0.15s; line-height: 1;
+  }
+  .mood-btn:hover { transform: scale(1.05); border-color: var(--accent); }
+  .mood-btn.active { background: var(--accent-soft); border-color: var(--accent); transform: scale(1.1); }
 
   /* 信息日报 */
   .news-block { padding: 14px 16px; }
   .news-block .src { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-  .news-block .nt { font-size: 15px; color: var(--text); margin-bottom: 4px; }
-  .news-block .nl { color: var(--text-2); font-size: 12px; word-break: break-all; }
+  .news-block .nt { font-size: 15px; color: var(--text); margin-bottom: 4px; display: block; }
+  a.news-block .nt, .news-block a.nt { color: var(--text); }
+  .news-block a.nt:hover { color: var(--accent); }
+  .news-block .nl { color: var(--text-2); font-size: 12px; word-break: break-all; display: block; margin-top: 4px; }
+  .news-block .ndesc { font-size: 12px; color: var(--text-2); margin-top: 6px; line-height: 1.5; }
+
+  .news-summary {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    background: var(--bg-3); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 20px; margin-bottom: 18px;
+  }
+  .news-summary > div { display: flex; flex-direction: column; align-items: flex-start; }
+  .news-summary .big-num { font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .news-summary .lab { font-size: 12px; color: var(--text-2); margin-top: 6px; }
+
+  .news-toolbar { flex-wrap: wrap; }
+  .news-rss-hint {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    font-size: 12px; color: var(--text-2); margin: 10px 0 16px;
+  }
+  .news-rss-hint .tag { font-size: 11px; }
 
   /* 复盘 */
   .replay-block { background: var(--bg-3); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
@@ -335,7 +437,9 @@
     .sidebar { display: none; }
     .main { padding: 22px 16px 92px; }
     .greeting { margin: 14px 0 36px; }
-    .greeting .slogan { font-size: 34px; }
+    .greeting .slogan { font-size: 32px; }
+    .habit-row { grid-template-columns: 1fr; gap: 10px; padding: 14px 16px; }
+    .habit-controls { justify-content: flex-start; }
     .feature-grid { grid-template-columns: repeat(2, 1fr); }
     .page-sub { margin-left: 0; }
     .page-head .big-icon { width: 48px; height: 48px; font-size: 22px; }
@@ -406,10 +510,11 @@ const DEFAULT_DATA = {
   tasks: [],
   captures: [],
   habits: [
-    { id: 'h-water',  name: '喝水', emoji: '💧', log: {} },
-    { id: 'h-read',   name: '阅读', emoji: '📖', log: {} },
-    { id: 'h-exer',   name: '运动', emoji: '🏃', log: {} },
-    { id: 'h-routine',name: '作息', emoji: '🌙', log: {} }
+    { id: 'h-water', name: '喝水', emoji: '💧', sub: '早 / 中 / 晚 各一杯', kind: 'water', cups: 3, log: {} },
+    { id: 'h-read',  name: '阅读', emoji: '📖', sub: '≥ 30 分钟',           kind: 'check', log: {} },
+    { id: 'h-exer',  name: '运动', emoji: '🏃', sub: '≥ 30 分钟(健身/骑行等)', kind: 'check', hasNote: true, log: {} },
+    { id: 'h-sleep', name: '早睡', emoji: '🛌', sub: '昨晚 23:00 前入睡',   kind: 'check', hasTime: true, log: {} },
+    { id: 'h-wake',  name: '早起', emoji: '🌅', sub: '记录早起',           kind: 'check', hasTime: true, log: {} }
   ],
   news: [],
   replay: [],
@@ -715,74 +820,197 @@ function renderCountdown() {
 }
 
 /* ===================== 习惯打卡 ===================== */
+const HABIT_COL_HEADS = ['水','读','动','睡','起','成']; // 表格列标题
+
+function isHabitDone(logVal) {
+  if (logVal === undefined || logVal === null) return false;
+  if (typeof logVal === 'object') return !!logVal.done;
+  return !!logVal;
+}
+function getLogObj(h, day) {
+  let v = h.log[day];
+  if (v === undefined || v === null) return null;
+  if (typeof v === 'object') return v;
+  // 旧数据：true => {done:true}
+  return { done: !!v };
+}
+
+function renderHabitRow(h, today) {
+  if (h.kind === 'water') {
+    let log = h.log[today];
+    if (!log || typeof log !== 'object' || !Array.isArray(log.cups)) {
+      log = { cups: [false, false, false] };
+      h.log[today] = log;
+    }
+    const labels = ['早一杯', '午一杯', '晚一杯'];
+    const checks = el('div', { style: { display: 'flex', gap: '14px', flexWrap: 'wrap' } });
+    labels.forEach((label, i) => {
+      const wrapL = el('label', { class: 'cup-check' + (log.cups[i] ? ' done' : '') },
+        el('input', { type: 'checkbox', checked: log.cups[i], onchange: (e) => {
+          log.cups[i] = e.target.checked;
+          saveDB();
+          wrapL.classList.toggle('done', e.target.checked);
+          refreshHabitTable();
+        }}),
+        el('span', {}, label)
+      );
+      checks.appendChild(wrapL);
+    });
+    return el('div', { class: 'habit-row' },
+      el('div', { class: 'habit-left' },
+        el('div', { class: 'h-name' }, `${h.emoji} ${h.name}`),
+        el('div', { class: 'h-sub' }, h.sub)
+      ),
+      el('div', { class: 'habit-controls' }, checks)
+    );
+  }
+
+  // 普通 check 类型
+  let l = getLogObj(h, today);
+  const isDone = isHabitDone(l);
+  const check = el('label', { class: 'check-toggle' + (isDone ? ' done' : '') },
+    el('input', { type: 'checkbox', checked: isDone, onchange: (e) => {
+      const v = e.target.checked;
+      if (!h.log[today] || typeof h.log[today] !== 'object') h.log[today] = {};
+      h.log[today].done = v;
+      if (!v && !h.hasTime && !h.hasNote) delete h.log[today];
+      saveDB();
+      check.classList.toggle('done', v);
+      refreshHabitTable();
+    }})
+  );
+
+  const extras = [];
+  if (h.hasTime) {
+    const tval = (l && l.time) || '';
+    const ti = el('input', { type: 'time', value: tval, class: 'habit-time', onchange: (e) => {
+      if (!h.log[today] || typeof h.log[today] !== 'object') h.log[today] = { done: true };
+      h.log[today].time = e.target.value;
+      saveDB();
+      refreshHabitTable();
+    }});
+    extras.push(ti);
+  }
+  if (h.hasNote) {
+    const nval = (l && l.note) || '';
+    const ni = el('input', { type: 'text', value: nval, placeholder: '类型(可选)', class: 'habit-note', onchange: (e) => {
+      if (!h.log[today] || typeof h.log[today] !== 'object') h.log[today] = { done: true };
+      h.log[today].note = e.target.value;
+      saveDB();
+      refreshHabitTable();
+    }});
+    extras.push(ni);
+  }
+
+  return el('div', { class: 'habit-row' },
+    el('div', { class: 'habit-left' },
+      el('div', { class: 'h-name' }, `${h.emoji} ${h.name}`),
+      el('div', { class: 'h-sub' }, h.sub)
+    ),
+    el('div', { class: 'habit-controls' }, check, ...extras)
+  );
+}
+
+function buildHabitTableHTML() {
+  // 取前 5 个作为列（按习惯当前顺序）
+  const display = DB.habits.slice(0, 5);
+  const wdNames = ['一', '二', '三', '四', '五', '六', '日'];
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    days.push({ key, label: `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`, wd: wdNames[(d.getDay()+6)%7], isToday: i === 0 });
+  }
+  const tbl = el('table', { class: 'habit-7d', id: 'habit7dTbl' });
+  const thead = el('thead');
+  const headRow = el('tr');
+  headRow.appendChild(el('th', {}, '日期'));
+  display.forEach((h, i) => headRow.appendChild(el('th', { title: h.name }, HABIT_COL_HEADS[i] || h.name.slice(0,1))));
+  thead.appendChild(headRow);
+  tbl.appendChild(thead);
+  const tbody = el('tbody');
+  days.forEach(d => {
+    const tr = el('tr', { class: d.isToday ? 'today' : '' });
+    tr.appendChild(el('td', {}, `${d.label} ${d.isToday ? '(今天)' : ''}`));
+    display.forEach(h => {
+      const log = h.log[d.key];
+      let txt = '', cls = '';
+      if (h.kind === 'water') {
+        const arr = (log && Array.isArray(log.cups)) ? log.cups : [];
+        const n = arr.filter(Boolean).length;
+        txt = `${n}/3`;
+        if (n > 0) cls = 'done';
+      } else {
+        const done = isHabitDone(log);
+        if (done) { txt = '✓'; cls = 'done'; } else txt = '·';
+      }
+      tr.appendChild(el('td', { class: cls, title: h.name + (typeof log === 'object' ? ' ' + (log?.time||'') + ' ' + (log?.note||'') : '') }, txt));
+    });
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  return tbl;
+}
+
+function refreshHabitTable() {
+  const old = $('#habit7dTbl');
+  if (!old) return;
+  const parent = old.parentNode;
+  const fresh = buildHabitTableHTML();
+  parent.replaceChild(fresh, old);
+}
+
 function renderHabit() {
   const wrap = el('div');
-  wrap.appendChild(pageHeader('✅', '习惯打卡', '喝水 / 阅读 / 运动 / 作息'));
+  wrap.appendChild(pageHeader('✅', '习惯打卡', '喝水 / 阅读 / 运动 / 早睡 / 早起'));
   const today = todayKey();
-  const grid = el('div', { class: 'habit-grid' });
-  DB.habits.forEach(h => {
-    const doneToday = !!h.log[today];
-    grid.appendChild(el('div', { class: 'habit-card' },
-      el('div', { class: 'emoji' }, h.emoji),
-      el('div', { class: 'h-info' },
-        el('div', { class: 'h-name' }, h.name),
-        el('div', { class: 'h-meta' }, `今日${doneToday ? ' ✓ 已打卡' : ' 未打卡'} · 累计 ${Object.keys(h.log).length} 次`)
-      ),
-      el('div', { class: 'h-check' + (doneToday ? ' done' : ''), onclick: () => toggleHabit(h.id) }, '✓')
-    ));
-  });
-  wrap.appendChild(grid);
-
-  wrap.appendChild(el('div', { style: { marginTop: '24px' } },
-    el('div', { class: 'section-title' }, el('span', { class: 'ico' }, '📊'), el('span', {}, '最近打卡'))
+  // 今日打卡
+  wrap.appendChild(el('div', { class: 'section-title' },
+    el('span', { class: 'ico' }, '📅'),
+    el('span', {}, `今天 · ${today}（勾选打卡，可加时间和说明）`)
   ));
-  const recentWrap = el('div', { class: 'card' });
-  DB.habits.forEach(h => {
-    const days = [];
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      days.push({ key, label: String(d.getDate()), done: !!h.log[key] });
-    }
-    recentWrap.appendChild(el('div', { style: { marginBottom: '14px' } },
-      el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' } },
-        el('span', { style: { fontWeight: '600' } }, `${h.emoji} ${h.name}`),
-        el('span', { class: 'tag gray', style: { fontSize: '11px' } }, `累计 ${Object.keys(h.log).length} 次`)
-      ),
-      el('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(14, 1fr)', gap: '4px' } },
-        ...days.map(d => el('div', {
-          title: `${d.key}${d.done ? ' ✓' : ''}`,
-          style: { aspectRatio: '1/1', borderRadius: '4px', background: d.done ? 'var(--success)' : 'var(--bg-1)', color: d.done ? '#fff' : 'var(--text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '600' }
-        }, d.label))
-      )
-    ));
-  });
+  const list = el('div', { class: 'habit-list' });
+  DB.habits.forEach(h => list.appendChild(renderHabitRow(h, today)));
+  wrap.appendChild(list);
+
+  // 最近 7 天表格
+  wrap.appendChild(el('div', { style: { marginTop: '28px' } },
+    el('div', { class: 'section-title' }, el('span', { class: 'ico' }, '📊'), el('span', {}, '最近 7 天'))
+  ));
+  const recentWrap = el('div', { class: 'card', style: { padding: '4px 0' } });
+  recentWrap.appendChild(buildHabitTableHTML());
   wrap.appendChild(recentWrap);
 
+  // 管理
   wrap.appendChild(el('div', { style: { marginTop: '24px' } },
     el('div', { class: 'section-title' }, el('span', { class: 'ico' }, '⚙️'), el('span', {}, '管理习惯')),
-    el('div', { style: { display: 'flex', gap: '10px', marginTop: '10px' } },
+    el('div', { style: { display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' } },
       el('button', { class: 'btn', onclick: addHabitDialog }, '+ 添加新习惯'),
       el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: removeHabitDialog }, '删除习惯')
     )
   ));
   return wrap;
 }
-function toggleHabit(id) {
-  const h = DB.habits.find(x=>x.id===id); if (!h) return;
-  const today = todayKey();
-  if (h.log[today]) { delete h.log[today]; toast('已取消打卡'); }
-  else { h.log[today] = Date.now(); toast(`${h.emoji} ${h.name} 已打卡！`); }
-  saveDB(); render();
-}
+
 function addHabitDialog() {
   openModal('添加习惯', (content, actions) => {
     content.appendChild(formRow('习惯名', input({ id: 'h-name', placeholder: '例如 冥想' })));
     content.appendChild(formRow('Emoji 图标', input({ id: 'h-emoji', placeholder: '例如 🧘' })));
+    content.appendChild(formRow('副标题', input({ id: 'h-sub', placeholder: '例如 20 分钟 / 睡前做' })));
+    content.appendChild(formRow('类型', el('select', { id: 'h-kind' },
+      el('option', { value: 'check' }, '打卡（复选框，可加时间/说明）'),
+      el('option', { value: 'water' }, '喝水（早/午/晚 三杯）')
+    )));
     actions.appendChild(button('添加', { onclick: () => {
-      const name = $('#h-name').value.trim(); const emoji = $('#h-emoji').value.trim() || '⭐';
+      const name = $('#h-name').value.trim();
+      const emoji = $('#h-emoji').value.trim() || '⭐';
+      const sub = $('#h-sub').value.trim() || '每天打卡';
+      const kind = $('#h-kind').value;
       if (!name) { toast('请填写名字'); return; }
-      DB.habits.push({ id: cid(), name, emoji, log: {} }); saveDB(); closeModal(); toast('已添加'); render();
+      const habit = { id: cid(), name, emoji, sub, kind, log: {} };
+      if (kind === 'water') habit.cups = 3;
+      DB.habits.push(habit);
+      saveDB(); closeModal(); toast('已添加'); render();
     }}));
   });
 }
@@ -799,28 +1027,170 @@ function removeHabitDialog() {
 }
 
 /* ===================== 信息日报 ===================== */
+const NEWS_RSS = [
+  { name: '华尔街见闻', cat: '金融',  url: 'https://wallstreetcn.com/rss' },
+  { name: '36氪',      cat: '财经',  url: 'https://36kr.com/feed' },
+  { name: '财新网',    cat: '财经',  url: 'https://www.caixin.com/rss/' },
+  { name: '第一财经',  cat: '财经',  url: 'https://www.yicai.com/rss/' },
+  { name: '中国政府网', cat: '政策', url: 'http://www.gov.cn/zhengce/zuixin/zhengcefabu/zhengcefabu/rss.xml' },
+  { name: '新华网财经', cat: '财经', url: 'http://www.news.cn/fortune/rss.xml' },
+  { name: '证券时报',  cat: '金融',  url: 'https://www.stcn.com/rss/' },
+  { name: '凤凰财经',  cat: '财经',  url: 'https://ishare.ifeng.com/rss/' }
+];
+
+async function fetchOneRSS(src) {
+  const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(src.url) + '&t=' + Date.now();
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 10000);
+    const r = await fetch(proxy, { signal: ctl.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if (!j || !j.contents) throw new Error('no contents');
+    const doc = new DOMParser().parseFromString(j.contents, 'text/xml');
+    const items = [...doc.querySelectorAll('item')].slice(0, 6);
+    const out = items.map(it => {
+      const title = (it.querySelector('title')?.textContent || '').trim();
+      let link = (it.querySelector('link')?.textContent || '').trim();
+      if (!link) {
+        const guid = it.querySelector('guid')?.textContent?.trim();
+        if (guid) link = guid;
+      }
+      const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
+      let ts = pubDate ? Date.parse(pubDate) : NaN;
+      if (isNaN(ts)) ts = Date.now();
+      const descNode = it.querySelector('description')?.textContent || '';
+      const desc = descNode.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').slice(0, 160).trim();
+      return { title, link, ts, desc, source: src.name, cat: src.cat };
+    }).filter(x => x.title && x.link);
+    return out;
+  } catch (e) {
+    console.warn('RSS fail', src.name, e.message);
+    return [];
+  }
+}
+
+async function batchFetchNews() {
+  const all = await Promise.all(NEWS_RSS.map(fetchOneRSS));
+  const flat = all.flat();
+  // 仅保留当日新闻（24h 内或与今日同日）
+  const now = Date.now();
+  const oneDay = 24 * 3600 * 1000;
+  const todayKeyDate = todayKey();
+  const recent = flat.filter(n => (now - n.ts) <= oneDay * 2 || fmtDateKey(n.ts) === todayKeyDate);
+  const list = (recent.length >= 10 ? recent : flat).slice();
+  list.sort((a, b) => b.ts - a.ts);
+  const seen = new Set();
+  const dedup = [];
+  list.forEach(n => {
+    const k = (n.source + '|' + n.title).replace(/\s+/g, '').slice(0, 60);
+    if (seen.has(k)) return;
+    seen.add(k);
+    dedup.push(n);
+  });
+  return dedup.slice(0, 40);
+}
+
+function fmtDateKey(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function importTodayNews() {
+  const btn = $('#fetchNewsBtn');
+  if (!btn) return;
+  const origTxt = '🔄 一键抓取今日要闻（≥10 条）';
+  btn.disabled = true;
+  btn.textContent = '⏳ 正在抓取 ' + NEWS_RSS.length + ' 个源...';
+  let list = [];
+  try { list = await batchFetchNews(); } catch (e) { list = []; }
+  if (list.length === 0) {
+    toast('抓取失败：CORS 代理或 RSS 源暂时不可用，稍后再试');
+    btn.disabled = false;
+    btn.textContent = origTxt;
+    return;
+  }
+  const today = todayKey();
+  const existingKey = new Set(
+    DB.news.filter(n => n.date === today).map(n => (n.source + '|' + n.title).replace(/\s+/g, '').slice(0, 60))
+  );
+  let added = 0;
+  list.forEach(n => {
+    const k = (n.source + '|' + n.title).replace(/\s+/g, '').slice(0, 60);
+    if (existingKey.has(k)) return;
+    DB.news.push({
+      id: cid(),
+      source: n.source,
+      cat: n.cat,
+      title: n.title,
+      link: n.link,
+      desc: n.desc,
+      ts: n.ts,
+      imported: true,
+      date: today
+    });
+    existingKey.add(k);
+    added++;
+  });
+  saveDB();
+  render();
+  toast(`已抓取 ${list.length} 条，新增 ${added} 条`);
+  btn.disabled = false;
+  btn.textContent = `✓ 已更新（最新 ${list.length} 条 / 新增 ${added}）`;
+  setTimeout(() => { btn.textContent = origTxt; }, 6000);
+}
+
 function renderNews() {
   const wrap = el('div');
-  wrap.appendChild(pageHeader('📰', '信息日报', '新闻 + AI 简报'));
-  wrap.appendChild(el('div', { class: 'toolbar' },
-    el('input', { type: 'text', id: 'n-src', placeholder: '来源（如 36氪）', style: { width: '120px' } }),
+  wrap.appendChild(pageHeader('📰', '信息日报', '财经 · 政策 · 政治 · 金融'));
+  const today = todayKey();
+  const todayCount = DB.news.filter(n => n.date === today).length;
+  const summary = el('div', { class: 'news-summary' },
+    el('div', {}, el('div', { class: 'big-num' }, todayCount), el('div', { class: 'lab' }, '今日已收录')),
+    el('div', {}, el('div', { class: 'big-num' }, DB.news.length), el('div', { class: 'lab' }, '累计收录')),
+    el('div', {}, el('div', { class: 'big-num' }, NEWS_RSS.length), el('div', { class: 'lab' }, 'RSS 数据源'))
+  );
+  wrap.appendChild(summary);
+
+  // 一键抓取
+  const toolbar = el('div', { class: 'toolbar news-toolbar' },
+    el('button', { id: 'fetchNewsBtn', class: 'btn', onclick: importTodayNews }, '🔄 一键抓取今日要闻（≥10 条）'),
+    el('input', { type: 'text', id: 'n-src', placeholder: '来源', style: { width: '110px' } }),
     el('input', { type: 'text', id: 'n-title', placeholder: '标题', style: { flex: '1' }, onkeydown: (e) => { if (e.key === 'Enter') addNews(); } }),
-    el('input', { type: 'text', id: 'n-link', placeholder: '链接（可选）', style: { width: '200px' } }),
-    el('button', { class: 'btn', onclick: addNews }, '+ 添加')
+    el('input', { type: 'text', id: 'n-link', placeholder: '链接（可选）', style: { width: '180px' } }),
+    el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: addNews }, '+ 添加')
+  );
+  wrap.appendChild(toolbar);
+  wrap.appendChild(el('div', { class: 'news-rss-hint' },
+    el('span', {}, '· 数据源：'),
+    ...NEWS_RSS.map(s => el('span', { class: 'tag gray', title: s.url }, s.name))
   ));
+
+  // 列表
   const groups = {};
-  [...DB.news].sort((a,b)=>b.date.localeCompare(a.date)).forEach(n => { (groups[n.date] = groups[n.date] || []).push(n); });
+  [...DB.news].sort((a, b) => (b.ts || 0) - (a.ts || 0) || b.date.localeCompare(a.date)).forEach(n => { (groups[n.date] = groups[n.date] || []).push(n); });
   if (Object.keys(groups).length === 0) {
-    wrap.appendChild(el('div', { class: 'empty' }, el('div', { class: 'big' }, '📰'), el('div', {}, '今天还没记录任何信息。')));
+    wrap.appendChild(el('div', { class: 'empty' },
+      el('div', { class: 'big' }, '📰'),
+      el('div', {}, '今日尚无信息。点击上方『一键抓取今日要闻』或手动添加。')
+    ));
   } else {
     Object.keys(groups).forEach(dateKey => {
       const dayDiv = el('div', { style: { marginBottom: '22px' } });
-      dayDiv.appendChild(el('div', { class: 'section-title' }, el('span', { class: 'ico' }, '📅'), el('span', {}, dateKey)));
+      dayDiv.appendChild(el('div', { class: 'section-title' }, el('span', { class: 'ico' }, '📅'), el('span', {}, dateKey + (dateKey === today ? ' · 今天' : ''))));
       const list = el('div', { class: 'item-list' });
       groups[dateKey].forEach(n => list.appendChild(el('div', { class: 'item news-block' },
         el('div', { class: 'item-main' },
-          el('div', { class: 'src' }, n.source || '其他'),
-          el('div', { class: 'nt' }, n.title),
+          el('div', { style: { display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap' } },
+            el('span', { class: 'src' }, n.source || '其他'),
+            n.cat ? el('span', { class: 'tag ' + (n.cat === '金融' ? 'purple' : (n.cat === '政策' ? 'green' : 'gray')) }, n.cat) : null,
+            n.imported ? el('span', { class: 'tag gray', title: 'RSS 自动抓取' }, '📡') : null
+          ),
+          n.link
+            ? el('a', { class: 'nt', href: n.link, target: '_blank', rel: 'noopener' }, n.title)
+            : el('div', { class: 'nt' }, n.title),
+          n.desc ? el('div', { class: 'ndesc' }, n.desc) : null,
           n.link ? el('a', { class: 'nl', href: n.link, target: '_blank', rel: 'noopener' }, n.link) : null
         ),
         el('div', { class: 'item-actions' }, el('button', { class: 'icon-btn del', onclick: () => deleteItem('news', n.id) }, '🗑'))
@@ -833,29 +1203,183 @@ function renderNews() {
 function addNews() {
   const source = $('#n-src').value.trim(); const title = $('#n-title').value.trim(); const link = $('#n-link').value.trim();
   if (!title) { toast('请填写标题'); return; }
-  DB.news.push({ id: cid(), source, title, link, date: todayKey() }); saveDB();
+  DB.news.push({ id: cid(), source, title, link, date: todayKey(), ts: Date.now() }); saveDB();
   $('#n-src').value=''; $('#n-title').value=''; $('#n-link').value=''; render();
 }
 
 /* ===================== 每日复盘 ===================== */
+const MOOD_LIST = [
+  { v: 1, emoji: '😞', label: '很差' },
+  { v: 2, emoji: '😟', label: '不太好' },
+  { v: 3, emoji: '😐', label: '一般' },
+  { v: 4, emoji: '🙂', label: '还行' },
+  { v: 5, emoji: '🤩', label: '超棒' }
+];
+
+function getReplay(date) {
+  return DB.replay.find(r => r.date === date) || { date, keep: '', improve: '', start: '', stop: '', mood: 0 };
+}
+function ensureReplay(date) {
+  let r = DB.replay.find(x => x.date === date);
+  if (!r) { r = { id: cid(), date, keep: '', improve: '', start: '', stop: '', mood: 0 }; DB.replay.push(r); }
+  return r;
+}
+function moodEmoji(m) {
+  const f = MOOD_LIST.find(x => x.v === Number(m));
+  return f ? `${f.emoji} ${f.label}` : '未记录';
+}
+
+function renderReplayKISS(r, today) {
+  // 单段：title + hint + textarea + 加入按钮
+  const sections = [
+    { key: 'keep',    label: 'Keep · 今天哪里做得好？',   hint: '分点写，明天继续' },
+    { key: 'improve', label: 'Improve · 哪里可以更好？',  hint: '分点写，明天改进（如"读书时长未达标"）' },
+    { key: 'start',   label: 'Start · 明天必须开始做什么？', hint: '分点写关键要事' },
+    { key: 'stop',    label: 'Stop · 今天哪个坏习惯要叫停？', hint: '分点写（如"熬夜刷手机"）' }
+  ];
+  const container = el('div', { class: 'replay-kiss' });
+  sections.forEach(s => {
+    const taId = `rk-${s.key}`;
+    const area = el('div', { class: 'kiss-block' });
+    area.appendChild(el('div', { class: 'kiss-title' }, s.label));
+    area.appendChild(el('div', { class: 'kiss-hint' }, s.hint));
+    const ta = el('textarea', { id: taId, class: 'kiss-ta', placeholder: '加一条…', rows: '2', oninput: (e) => {
+      const obj = ensureReplay(today);
+      obj[s.key] = (obj[s.key] || '') + (e.target.value === e.target.defaultValue ? '' : '');
+      saveDB();
+      e.target.defaultValue = e.target.value;
+    }});
+    if (r[s.key]) { ta.defaultValue = r[s.key]; ta.value = r[s.key]; }
+    area.appendChild(ta);
+    const addBtn = el('button', { class: 'kiss-add', onclick: () => {
+      const cur = ta.value.trim();
+      if (!cur) { toast('先写一条再继续'); return; }
+      const newLine = (cur.endsWith('\n') ? '' : '\n') + '• ';
+      ta.value = cur + newLine;
+      ta.focus();
+      const obj = ensureReplay(today);
+      obj[s.key] = ta.value;
+      saveDB();
+    }}, '+');
+    area.appendChild(addBtn);
+    container.appendChild(area);
+  });
+  return container;
+}
+
+function renderReplayMood(r, today) {
+  const wrap = el('div', { class: 'kiss-mood' });
+  wrap.appendChild(el('div', { class: 'kiss-title' }, '今日情绪指数'));
+  wrap.appendChild(el('div', { class: 'kiss-hint' }, '点选一个表情 (1-5 分)'));
+  const picker = el('div', { class: 'mood-picker' });
+  MOOD_LIST.forEach(m => {
+    const isActive = Number(r.mood) === m.v;
+    const btn = el('button', { class: 'mood-btn' + (isActive ? ' active' : ''), title: `${m.v} 分 · ${m.label}`, onclick: () => {
+      const obj = ensureReplay(today);
+      obj.mood = m.v;
+      saveDB();
+      $$('.mood-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      refreshMoodCurve();
+    }}, m.emoji);
+    picker.appendChild(btn);
+  });
+  wrap.appendChild(picker);
+  return wrap;
+}
+
+function renderMoodCurve() {
+  // 最近 30 天
+  const days = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const r = DB.replay.find(x => x.date === key);
+    const m = r ? Number(r.mood) : 0;
+    days.push({ key, label: String(d.getDate()), m });
+  }
+  const W = 720, H = 130;
+  const padL = 30, padR = 10, padT = 12, padB = 22;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const xStep = plotW / Math.max(1, days.length - 1);
+  const yFor = m => m === 0 ? null : padT + plotH * (1 - (m - 1) / 4); // 1->bottom, 5->top
+  // 网格线 + Y 标签（1-5）
+  const svgChildren = [];
+  for (let v = 1; v <= 5; v++) {
+    const y = padT + plotH * (1 - (v - 1) / 4);
+    svgChildren.push(`<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#E5E7EB" stroke-dasharray="3,3" />`);
+    svgChildren.push(`<text x="${padL - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#9CA3AF">${v}</text>`);
+  }
+  // X 轴标签：每 5 天一个
+  days.forEach((d, i) => {
+    if (i % 5 !== 0 && i !== days.length - 1) return;
+    const x = padL + xStep * i;
+    svgChildren.push(`<text x="${x}" y="${H - 6}" text-anchor="middle" font-size="10" fill="#9CA3AF">${d.label}</text>`);
+  });
+  // 折线（跳过 mood=0）
+  const points = days.map((d, i) => ({ x: padL + xStep * i, y: yFor(d.m), v: d.m }));
+  // 段：只在连续有点的情况下连线
+  for (let i = 1; i < points.length; i++) {
+    if (points[i-1].y !== null && points[i].y !== null) {
+      svgChildren.push(`<line x1="${points[i-1].x}" y1="${points[i-1].y}" x2="${points[i].x}" y2="${points[i].y}" stroke="#3B82F6" stroke-width="2" />`);
+    }
+  }
+  // 点
+  points.forEach((p) => {
+    if (p.y === null) return;
+    svgChildren.push(`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#3B82F6" stroke="#fff" stroke-width="2" />`);
+  });
+  const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">${svgChildren.join('')}</svg>`;
+  return svg;
+}
+
+function refreshMoodCurve() {
+  const c = $('#moodCurveBox');
+  if (!c) return;
+  c.innerHTML = renderMoodCurve();
+}
+
 function renderReplay() {
   const wrap = el('div');
-  wrap.appendChild(pageHeader('📝', '每日复盘', 'KISS 复盘 + 情绪'));
-  wrap.appendChild(el('div', { class: 'toolbar' }, el('button', { class: 'btn', onclick: () => addReplayDialog(todayKey()) }, '+ 复盘今天')));
-  if (DB.replay.length === 0) {
-    wrap.appendChild(el('div', { class: 'empty' }, el('div', { class: 'big' }, '📝'), el('div', {}, '还没有复盘。K=保持，I=改进，S=开始，S=停止。')));
+  wrap.appendChild(pageHeader('📝', '每日复盘', 'KISS 复盘 + 情绪记录'));
+  const today = todayKey();
+  const r = getReplay(today);
+  const card = el('div', { class: 'card replay-card' });
+  card.appendChild(el('div', { class: 'replay-today-tag' }, `📅 ${today}（今天，自动保存）`));
+  card.appendChild(renderReplayKISS(r, today));
+  card.appendChild(renderReplayMood(r, today));
+  wrap.appendChild(card);
+
+  // 情绪曲线
+  wrap.appendChild(el('div', { style: { marginTop: '28px' } },
+    el('div', { class: 'section-title' }, el('span', { class: 'ico' }, '📈'), el('span', {}, '情绪曲线 · 最近 30 天'))
+  ));
+  const curveCard = el('div', { class: 'card', style: { padding: '14px 8px' } });
+  curveCard.innerHTML = `<div id="moodCurveBox">${renderMoodCurve()}</div>`;
+  wrap.appendChild(curveCard);
+
+  // 历史
+  wrap.appendChild(el('div', { style: { marginTop: '28px' } },
+    el('div', { class: 'section-title' }, el('span', { class: 'ico' }, '🗂'), el('span', {}, '历史复盘'))
+  ));
+  const sorted = [...DB.replay].sort((a, b) => b.date.localeCompare(a.date));
+  if (sorted.length === 0) {
+    wrap.appendChild(el('div', { class: 'empty' }, el('div', { class: 'big' }, '📝'), el('div', {}, '还没有历史复盘。')));
   } else {
-    [...DB.replay].sort((a,b)=>b.date.localeCompare(a.date)).forEach(r => {
+    sorted.forEach(r2 => {
       wrap.appendChild(el('div', { class: 'replay-block' },
-        el('div', { class: 'day' }, `📅 ${r.date}`),
+        el('div', { class: 'day' }, `📅 ${r2.date}`),
         el('div', { class: 'replay-grid' },
-          cell('K · Keep 保持', r.keep), cell('I · Improve 改进', r.improve),
-          cell('S · Start 开始', r.start), cell('S · Stop 停止', r.stop)
+          cell('K · Keep 保持', r2.keep), cell('I · Improve 改进', r2.improve),
+          cell('S · Start 开始', r2.start), cell('S · Stop 停止', r2.stop)
         ),
-        el('div', { class: 'emo' }, el('span', {}, '今日情绪'), el('span', { class: 'scale' }, moodText(r.mood))),
+        el('div', { class: 'emo' }, el('span', {}, '情绪'), el('span', { class: 'scale' }, moodEmoji(r2.mood))),
         el('div', { style: { display: 'flex', gap: '8px', marginTop: '12px' } },
-          el('button', { class: 'btn-ghost', style: { padding: '6px 12px', fontSize: '12px', border: '1px solid var(--border-strong)', borderRadius: '6px' }, onclick: () => addReplayDialog(r.date, r) }, '编辑'),
-          el('button', { class: 'btn-ghost', style: { padding: '6px 12px', fontSize: '12px', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--danger)' }, onclick: () => deleteItem('replay', r.id) }, '删除')
+          el('button', { class: 'btn-ghost', style: { padding: '6px 12px', fontSize: '12px', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--danger)' }, onclick: () => {
+            if (!confirm('删除 ' + r2.date + ' 的复盘？')) return;
+            DB.replay = DB.replay.filter(x => x.id !== r2.id); saveDB(); render(); toast('已删除');
+          } }, '删除')
         )
       ));
     });
@@ -864,34 +1388,6 @@ function renderReplay() {
 }
 function cell(label, value) {
   return el('div', { class: 'replay-cell' }, el('div', { class: 'lab' }, label), el('div', { class: 'val' }, value || '—'));
-}
-function moodText(m) {
-  if (m === undefined || m === null || m === '') return '未记录';
-  const map = ['😞 很差','😟 不太好','😐 一般','🙂 还行','😊 不错','🤩 超棒'];
-  return map[m] || `${m}/5`;
-}
-function addReplayDialog(date, existing = null) {
-  const isEdit = !!existing;
-  openModal((isEdit ? '编辑' : '添加') + '复盘 · ' + date, (content, actions) => {
-    const fld = (id, label, ph, val) => { const t = el('textarea', { id, placeholder: ph, rows: '3', style: { resize: 'vertical' } }); if (val) t.value = val; content.appendChild(formRow(label, t)); return t; };
-    fld('r-keep', 'K · Keep 保持', '今天做得好的事，保持下去', existing?.keep);
-    fld('r-improve', 'I · Improve 改进', '哪里可以做得更好', existing?.improve);
-    fld('r-start', 'S · Start 开始', '明天开始做什么新尝试', existing?.start);
-    fld('r-stop', 'S · Stop 停止', '明天停止做什么', existing?.stop);
-    const mood = el('select', { id: 'r-mood' },
-      el('option', { value: '' }, '选择情绪...'),
-      el('option', { value: '0' }, '😞 很差'), el('option', { value: '1' }, '😟 不太好'),
-      el('option', { value: '2' }, '😐 一般'), el('option', { value: '3' }, '🙂 还行'),
-      el('option', { value: '4' }, '😊 不错'), el('option', { value: '5' }, '🤩 超棒')
-    );
-    if (existing?.mood !== undefined && existing?.mood !== null && existing?.mood !== '') mood.value = existing.mood;
-    content.appendChild(formRow('今日情绪', mood));
-    actions.appendChild(button('保存', { onclick: () => {
-      const obj = { date, keep: $('#r-keep').value.trim(), improve: $('#r-improve').value.trim(), start: $('#r-start').value.trim(), stop: $('#r-stop').value.trim(), mood: $('#r-mood').value === '' ? null : Number($('#r-mood').value) };
-      if (isEdit) Object.assign(existing, obj); else DB.replay.push({ id: cid(), ...obj });
-      saveDB(); closeModal(); toast('已保存'); render();
-    }}));
-  });
 }
 
 /* ===================== 影视库 ===================== */
