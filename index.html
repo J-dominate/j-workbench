@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>J · 个人工作台</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233B82F6'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%23fff' font-family='Arial' font-size='18' font-weight='bold'%3EJ%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#2563EB">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="J 工作台">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
   /* ============== 极简浅色主题 ============== */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1551,6 +1558,14 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal
 render();
 // 启动时若已开启自动同步且已连接云端，则拉取最新数据
 if (SYNC.auto && SYNC.token && SYNC.gistId) gistLoad(false);
+</script>
+<script>
+  // PWA Service Worker 注册（让安卓 Chrome 弹出"添加到主屏幕"，并支持离线）
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
 </script>
 </body>
 </html>
