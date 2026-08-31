@@ -247,14 +247,84 @@
   .empty { text-align: center; color: var(--text-3); padding: 40px 20px; font-size: 14px; }
   .empty .big { font-size: 36px; margin-bottom: 8px; opacity: 0.4; }
 
-  /* 今日任务时间轴 */
-  .task-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 12px; align-items: center; }
-  .task-row .time { color: var(--accent); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; }
-  .task-row .text-input {
-    background: var(--bg-1); border: 1px solid var(--border); padding: 9px 12px;
-    border-radius: 8px; color: var(--text); outline: none; font-size: 14px; width: 100%;
-  }
-  .task-row .text-input:focus { border-color: var(--accent); }
+/* 今日任务时间轴 */
+.task-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 12px; align-items: center; }
+.task-row .time { color: var(--accent); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; text-align: right; }
+.task-row .text-input {
+  background: var(--bg-1); border: 1px solid var(--border); padding: 9px 12px;
+  border-radius: 8px; color: var(--text); outline: none; font-size: 14px; width: 100%;
+}
+.task-row .text-input:focus { border-color: var(--accent); }
+
+/* 每日任务：月历 + 当日 */
+.task-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+.task-crumb { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: var(--text); }
+.task-crumb .tag { font-size: 12px; padding: 2px 8px; }
+.task-pane { display: grid; grid-template-columns: minmax(260px, 330px) 1fr; gap: 18px; }
+@media (max-width: 760px) { .task-pane { grid-template-columns: 1fr; } }
+
+.task-cal { padding: 14px; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-title { font-weight: 700; font-size: 15px; color: var(--text); }
+.cal-nav {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-1); color: var(--text-2); cursor: pointer; font-size: 12px;
+}
+.cal-nav:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+.cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-week { font-size: 11px; color: var(--text-2); text-align: center; padding: 4px 0 6px; }
+.cal-week div { padding: 2px 0; }
+
+.cal-cell {
+  aspect-ratio: 1/1; border-radius: 8px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px; cursor: pointer;
+  background: var(--bg-1); border: 1px solid transparent; color: var(--text-2);
+  font-size: 13px; transition: all 0.12s; position: relative;
+}
+.cal-cell:hover { background: var(--bg-hover); }
+.cal-cell .cal-day { font-weight: 500; }
+.cal-cell .cal-status { line-height: 0; }
+.cal-cell.other { color: var(--text-3); opacity: 0.55; }
+.cal-cell.today { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.cal-cell.today .cal-day { background: var(--accent); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.cal-cell.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.cal-cell.st-allDone { background: rgba(34,197,94,0.12); color: #15803d; }
+.cal-cell.st-partial { background: rgba(234,179,8,0.16); color: #a16207; }
+.cal-cell.st-planned { background: rgba(59,130,246,0.14); color: #1d4ed8; }
+.cal-cell.st-pastUndone { background: rgba(239,68,68,0.14); color: #b91c1c; }
+
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
+.dot-allDone { background: #22c55e; }
+.dot-partial { background: #eab308; }
+.dot-pastUndone { background: #ef4444; }
+.dot-planned { background: #3b82f6; }
+
+.cal-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-2); }
+.cal-legend span { display: flex; align-items: center; gap: 4px; }
+
+/* 当日详情面板 */
+.task-detail { display: flex; flex-direction: column; padding: 18px; }
+.detail-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.detail-title { font-size: 22px; font-weight: 700; color: var(--text); }
+.detail-sub { color: var(--text-2); font-size: 13px; }
+.detail-actions { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+
+.task-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.prog-bar { flex: 1; height: 8px; background: var(--bg-1); border-radius: 4px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #22c55e); transition: width 0.2s; }
+.prog-label { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+
+.task-item { align-items: center; }
+.task-item .item-meta { color: var(--accent); font-weight: 500; }
+.task-note { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border); }
+.task-note-label { font-size: 12px; color: var(--text-2); margin-bottom: 6px; font-weight: 500; }
+.task-note textarea {
+  width: 100%; box-sizing: border-box; background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 13px; font-family: inherit;
+  resize: vertical; min-height: 60px;
+}
+.task-note textarea:focus { outline: none; border-color: var(--accent); }
 
   /* 习惯打卡 */
   .habit-list { background: var(--bg-3); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
@@ -375,10 +445,13 @@
   .replay-block .emo .scale { display: inline-block; padding: 2px 10px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; }
 
   /* 影视库 */
-  .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+  .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
   .media-card {
     background: var(--bg-3); border: 1px solid var(--border); border-radius: 12px;
     padding: 16px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .media-card.media-clean {
+    border-left: 4px solid var(--accent);
   }
   .media-card .poster {
     aspect-ratio: 2/3; background: var(--bg-1); border-radius: 8px;
@@ -395,6 +468,14 @@
   /* 设置 */
   .set-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 14px; box-shadow: var(--shadow); }
   .set-card .section-title { margin-bottom: 12px; }
+
+.sync-indicator { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; background: var(--bg-1); border: 1px solid var(--border); font-size: 12px; cursor: pointer; color: var(--text-2); }
+.sync-indicator:hover { background: var(--bg-hover); }
+.si-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.si-dot.on { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.18); }
+.si-dot.off { background: #cbd5e1; }
+.si-dot.busy { background: #3b82f6; animation: si-pulse 1s infinite; }
+@keyframes si-pulse { 0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.5); } 100% { box-shadow: 0 0 0 6px rgba(59,130,246,0); } }
   .set-grid { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; margin-top: 4px; }
   .set-grid > div:not(.set-label):not(input):not(select) { }
   .set-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
@@ -474,7 +555,7 @@
     <div class="brand"><span class="dot">·</span><span>J · 工作台</span></div>
     <nav class="nav" id="nav">
       <div class="nav-item active" data-page="home"><span class="ico">🏠</span><span>主页</span></div>
-      <div class="nav-item" data-page="tasks"><span class="ico">📅</span><span>今日任务</span></div>
+      <div class="nav-item" data-page="tasks"><span class="ico">📅</span><span>每日任务</span></div>
       <div class="nav-item" data-page="capture"><span class="ico">✏️</span><span>快速捕记</span></div>
       <div class="nav-item" data-page="countdown"><span class="ico">⏳</span><span>倒数日</span></div>
       <div class="nav-item" data-page="habit"><span class="ico">✅</span><span>习惯打卡</span></div>
@@ -551,7 +632,10 @@ let DB = loadDB();
 const SYNC = {
   token: localStorage.getItem('jwb_gist_token') || '',
   gistId: localStorage.getItem('jwb_gist_id') || '',
-  auto: localStorage.getItem('jwb_autosync') !== '0'
+  auto: localStorage.getItem('jwb_autosync') !== '0',
+  lastSyncAt: 0,
+  lastRemoteUpdatedAt: '',
+  syncing: false
 };
 function saveSyncCreds() {
   localStorage.setItem('jwb_gist_token', SYNC.token);
@@ -562,15 +646,41 @@ let _syncTimer = null;
 function scheduleSync() {
   if (!SYNC.auto || !SYNC.token) return;
   clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(() => gistSave(false), 1500);
+  _syncTimer = setTimeout(() => gistSave(false), 1200);
 }
-async function gistSave(showToast = true) {
-  if (!SYNC.token) { if (showToast) toast('请先在设置中连接云端'); return false; }
-  const url = SYNC.gistId ? `https://api.github.com/gists/${SYNC.gistId}` : 'https://api.github.com/gists';
-  const method = SYNC.gistId ? 'PATCH' : 'POST';
-  const body = { files: { 'workbench.json': { content: JSON.stringify(DB, null, 2) } } };
-  if (!SYNC.gistId) { body.description = 'J Workbench Data'; body.public = false; }
+
+async function gistFindExisting() {
+  // 用 token 列出用户私有 Gist，找名为 "J Workbench Data" 的那条并返回 id
+  if (!SYNC.token) return null;
   try {
+    const res = await fetch('https://api.github.com/gists?per_page=100', {
+      headers: { 'Authorization': `Bearer ${SYNC.token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (!res.ok) return null;
+    const arr = await res.json();
+    const found = arr.find(g => g.description === 'J Workbench Data');
+    return found ? found.id : null;
+  } catch (e) { return null; }
+}
+
+async function gistSave(showToast = true, force = false) {
+  if (!SYNC.token) { if (showToast) toast('请先在设置中连接云端'); return false; }
+  if (SYNC.syncing && !force) return false;
+  SYNC.syncing = true;
+  try {
+    if (!SYNC.gistId) {
+      // 自动发现已存在的 Gist（多设备共享用）
+      const found = await gistFindExisting();
+      if (found) {
+        SYNC.gistId = found;
+        saveSyncCreds();
+        if (showToast) toast('已找到现有云端存储');
+      }
+    }
+    const url = SYNC.gistId ? `https://api.github.com/gists/${SYNC.gistId}` : 'https://api.github.com/gists';
+    const method = SYNC.gistId ? 'PATCH' : 'POST';
+    const body = { files: { 'workbench.json': { content: JSON.stringify(DB, null, 2) } } };
+    if (!SYNC.gistId) { body.description = 'J Workbench Data'; body.public = false; }
     const res = await fetch(url, {
       method,
       headers: { 'Authorization': `Bearer ${SYNC.token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' },
@@ -579,14 +689,29 @@ async function gistSave(showToast = true) {
     if (!res.ok) { const j = await res.json().catch(()=>({})); throw new Error((j.message) || ('HTTP ' + res.status)); }
     const data = await res.json();
     if (!SYNC.gistId) SYNC.gistId = data.id;
+    SYNC.lastSyncAt = Date.now();
+    SYNC.lastRemoteUpdatedAt = data.updated_at || '';
     saveSyncCreds();
-    if (showToast) toast('已同步到云端');
+    updateSyncBadge();
+    if (showToast) toast('✓ 已同步到云端');
     return true;
   } catch (e) { if (showToast) toast('同步失败：' + e.message); return false; }
+  finally { SYNC.syncing = false; }
 }
+
 async function gistLoad(showToast = true) {
   if (!SYNC.token) { if (showToast) toast('请先在设置中连接云端'); return false; }
-  if (!SYNC.gistId) { if (showToast) toast('尚未创建云端存储，请先上传'); return false; }
+  if (!SYNC.gistId) {
+    // 自动发现
+    const found = await gistFindExisting();
+    if (found) {
+      SYNC.gistId = found; saveSyncCreds();
+      if (showToast) toast('已找到现有云端存储');
+    } else {
+      if (showToast) toast('尚未创建云端存储，请先点「上传到云端」');
+      return false;
+    }
+  }
   try {
     const res = await fetch(`https://api.github.com/gists/${SYNC.gistId}`, {
       headers: { 'Authorization': `Bearer ${SYNC.token}`, 'Accept': 'application/vnd.github+json' }
@@ -596,12 +721,65 @@ async function gistLoad(showToast = true) {
     const content = data.files['workbench.json'] ? data.files['workbench.json'].content : null;
     if (!content) throw new Error('云端暂无可读数据');
     const parsed = JSON.parse(content);
-    DB = { ...DEFAULT_DATA, ...parsed, profile: { ...DEFAULT_DATA.profile, ...(parsed.profile || {}) } };
+    // 合并：保留本地未同步的更改（简单的全量替换，因为本工具的数据多为轻量文本）
+    DB = { ...DEFAULT_DATA, ...parsed, profile: { ...DEFAULT_DATA.profile, ...(parsed.profile || {}) }, taskNotes: parsed.taskNotes || {} };
+    SYNC.lastSyncAt = Date.now();
+    SYNC.lastRemoteUpdatedAt = data.updated_at || '';
     saveDB();
-    if (showToast) toast('已从云端加载');
+    saveSyncCreds();
+    updateSyncBadge();
+    if (showToast) toast('✓ 已从云端加载（覆盖本地）');
     render();
     return true;
   } catch (e) { if (showToast) toast('加载失败：' + e.message); return false; }
+}
+
+// 后台静默拉取：仅在远端 updated_at 更新时覆盖本地
+async function gistPoll() {
+  if (!SYNC.token || !SYNC.gistId) return;
+  if (Date.now() - SYNC.lastSyncAt < 5000) return; // 节流：5s 内不重复拉取
+  try {
+    const res = await fetch(`https://api.github.com/gists/${SYNC.gistId}`, {
+      headers: { 'Authorization': `Bearer ${SYNC.token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (!res.ok) return;
+    const meta = await res.json();
+    if (meta.updated_at && meta.updated_at !== SYNC.lastRemoteUpdatedAt) {
+      // 远端有变化 → 拉取并提示
+      const content = meta.files['workbench.json'] ? meta.files['workbench.json'].content : null;
+      if (!content) return;
+      const parsed = JSON.parse(content);
+      DB = { ...DEFAULT_DATA, ...parsed, profile: { ...DEFAULT_DATA.profile, ...(parsed.profile || {}) }, taskNotes: parsed.taskNotes || {} };
+      SYNC.lastRemoteUpdatedAt = meta.updated_at;
+      SYNC.lastSyncAt = Date.now();
+      saveDB();
+      saveSyncCreds();
+      updateSyncBadge();
+      toast('☁️ 检测到云端更新，已自动同步');
+      render();
+    }
+  } catch (e) { /* 静默失败，下次再试 */ }
+}
+
+function updateSyncBadge() {
+  const el = document.querySelector('.sync-indicator');
+  if (!el) return;
+  if (!SYNC.token || !SYNC.gistId) {
+    el.innerHTML = '<span class="si-dot off"></span><span>未连接</span>';
+    return;
+  }
+  const last = SYNC.lastSyncAt ? new Date(SYNC.lastSyncAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '—';
+  el.innerHTML = '<span class="si-dot ' + (SYNC.syncing ? 'busy' : 'on') + '"></span><span>已同步 · ' + last + '</span>';
+  el.onclick = () => gistLoad(true);
+}
+
+async function manualSync() {
+  if (!SYNC.token) { toast('请先填写 GitHub Token'); return; }
+  toast(SYNC.gistId ? '🔄 正在双向同步…' : '🔄 正在连接云端…');
+  // 先 pull 再 push，避免覆盖远端更新
+  if (SYNC.gistId) await gistLoad(false);
+  await gistSave(false, true);
+  render();
 }
 
 /* ===================== 工具 ===================== */
@@ -638,6 +816,12 @@ function daysBetween(target) {
 function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function shiftDateKey(dateKey, delta) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + delta);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 function fmtDateTime(ts) {
   const d = new Date(ts);
@@ -714,7 +898,7 @@ function renderCountdownList() {
 function renderFeatureGrid() {
   const grid = el('div', { class: 'feature-grid' });
   const features = [
-    { name: '今日任务', desc: '时间轴计划', icon: '📅', cls: 'miss', page: 'tasks' },
+    { name: '每日任务', desc: '月历 · 制定 · 自动顺延', icon: '📅', cls: 'miss', page: 'tasks' },
     { name: '快速捕记', desc: '随手备忘录', icon: '✏️', cls: 'capture', page: 'capture' },
     { name: '倒数日', desc: '重要日子倒计时', icon: '⏳', cls: 'countdown', page: 'countdown' },
     { name: '习惯打卡', desc: '喝水 / 阅读 / 运动 / 作息', icon: '✅', cls: 'habit', page: 'habit' },
@@ -749,38 +933,298 @@ function editProfile(field) {
   DB.profile[field] = trimmed; saveDB(); render();
 }
 
-/* ===================== 今日任务 ===================== */
+/* ===================== 每日任务（月历 + 当日 + 自动顺延） ===================== */
+let TASK_VIEW = { year: 0, month: 0, day: '' }; // 0 表示"今天"
+
+function carryOverTasks() {
+  const today = todayKey();
+  let changed = false;
+  const toAdd = [];
+  DB.tasks.forEach(t => {
+    if (!t.date) {
+      // 迁移老数据：日期从 createdAt 推断
+      const d = t.createdAt ? new Date(t.createdAt) : new Date();
+      t.date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      changed = true;
+    }
+    if (t.date < today && !t.done) {
+      // 把过期未完成的任务顺延到今天（保留原日期作为 carriedFrom 标记）
+      toAdd.push({
+        id: cid(),
+        date: today,
+        time: t.time || '',
+        text: t.text,
+        done: false,
+        carriedFrom: t.date,
+        originId: t.id,
+        createdAt: Date.now()
+      });
+      changed = true;
+    }
+  });
+  if (toAdd.length) DB.tasks.push(...toAdd);
+  if (changed) saveDB();
+  return toAdd.length;
+}
+
+function dayStatus(dateKey) {
+  // 返回该日任务状态：'none' | 'planned' | 'allDone' | 'partial' | 'pastUndone'
+  const list = DB.tasks.filter(t => t.date === dateKey);
+  if (list.length === 0) return 'none';
+  const today = todayKey();
+  const doneCount = list.filter(t => t.done).length;
+  if (doneCount === list.length) return 'allDone';
+  if (doneCount === 0) return dateKey < today ? 'pastUndone' : 'planned';
+  return 'partial';
+}
+
 function renderTasks() {
+  carryOverTasks(); // 进入页面自动顺延一次
+  const today = todayKey();
+  if (!TASK_VIEW.day) TASK_VIEW.day = today;
+  const [y, m] = TASK_VIEW.day.split('-').map(Number);
+
   const wrap = el('div');
-  wrap.appendChild(pageHeader('📅', '今日任务', '时间轴计划'));
-  wrap.appendChild(el('div', { class: 'toolbar' },
-    el('input', { type: 'time', id: 'taskTime', value: '09:00' }),
-    el('input', { type: 'text', id: 'taskText', placeholder: '要做什么？', onkeydown: (e) => { if (e.key === 'Enter') addTask(); } }),
-    el('button', { class: 'btn', onclick: addTask }, '+ 添加'),
-    el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: () => { DB.tasks = []; saveDB(); toast('已清空'); render(); } }, '清空')
+  wrap.appendChild(pageHeader('📅', '每日任务', '月历总览 · 制定 · 勾选 · 自动顺延'));
+
+  // 顶部面包屑
+  const [curY, curM, curD] = TASK_VIEW.day.split('-').map(Number);
+  const crumb = el('div', { class: 'task-crumb' },
+    el('span', {}, `${curY}年${curM}月${curD}日`),
+    el('span', { class: 'tag gray' }, weekdayLabel(TASK_VIEW.day))
+  );
+  const topBar = el('div', { class: 'task-top' }, crumb,
+    TASK_VIEW.day === today ? el('span', { class: 'tag green' }, '今天') :
+    el('button', { class: 'btn-ghost', style: { padding: '6px 14px', fontSize: '12px', border: '1px solid var(--border-strong)', borderRadius: '6px' }, onclick: goToToday }, '跳到今天')
+  );
+  wrap.appendChild(topBar);
+
+  // 双栏
+  const twoPane = el('div', { class: 'task-pane' });
+
+  // 左侧：月历
+  const left = el('div', { class: 'task-cal card' });
+  const calHeader = el('div', { class: 'cal-header' },
+    el('button', { class: 'cal-nav', onclick: () => shiftMonth(-1) }, '◀'),
+    el('div', { class: 'cal-title' }, `${curY}年${curM}月`),
+    el('button', { class: 'cal-nav', onclick: () => shiftMonth(1) }, '▶')
+  );
+  left.appendChild(calHeader);
+
+  const weekRow = el('div', { class: 'cal-week' });
+  ['日','一','二','三','四','五','六'].forEach(w => weekRow.appendChild(el('div', {}, w)));
+  left.appendChild(weekRow);
+
+  const grid = el('div', { class: 'cal-grid' });
+  const first = new Date(curY, curM - 1, 1);
+  const startWeekday = first.getDay(); // 0=Sun
+  const daysInMonth = new Date(curY, curM, 0).getDate();
+  const prevMonthDays = new Date(curY, curM - 1, 0).getDate();
+
+  // 上月尾巴
+  for (let i = startWeekday - 1; i >= 0; i--) {
+    const d = prevMonthDays - i;
+    const pm = curM === 1 ? 12 : curM - 1;
+    const py = curM === 1 ? curY - 1 : curY;
+    const key = `${py}-${String(pm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    grid.appendChild(buildDayCell(py, pm, d, key, true));
+  }
+  // 本月
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    grid.appendChild(buildDayCell(curY, curM, d, key, false));
+  }
+  // 下月开头
+  const totalCells = startWeekday + daysInMonth;
+  const nextDays = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= nextDays; i++) {
+    const nm = curM === 12 ? 1 : curM + 1;
+    const ny = curM === 12 ? curY + 1 : curY;
+    const key = `${ny}-${String(nm).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    grid.appendChild(buildDayCell(ny, nm, i, key, true));
+  }
+  left.appendChild(grid);
+
+  // 颜色图例
+  left.appendChild(el('div', { class: 'cal-legend' },
+    el('span', {}, el('span', { class: 'dot dot-allDone' }), '全部完成'),
+    el('span', {}, el('span', { class: 'dot dot-partial' }), '部分完成'),
+    el('span', {}, el('span', { class: 'dot dot-pastUndone' }), '未完成'),
+    el('span', {}, el('span', { class: 'dot dot-planned' }), '已制定')
   ));
-  if (DB.tasks.length === 0) {
-    wrap.appendChild(el('div', { class: 'empty' }, el('div', { class: 'big' }, '📅'), el('div', {}, '今天还没有任务，添加一条开始吧。')));
+
+  twoPane.appendChild(left);
+
+  // 右侧：当日详情
+  const right = el('div', { class: 'task-detail card' });
+  right.appendChild(el('div', { class: 'detail-head' },
+    el('div', { class: 'detail-title' }, `${curY}年${curM}月${curD}日`),
+    el('div', { class: 'detail-sub' }, weekdayLabel(TASK_VIEW.day)),
+    el('div', { class: 'detail-actions' },
+      el('button', { class: 'btn-ghost', style: { padding: '7px 14px', border: '1px solid var(--border-strong)', borderRadius: '8px' }, onclick: () => gotoYesterday() }, '← 前一天'),
+      el('button', { class: 'btn-ghost', style: { padding: '7px 14px', border: '1px solid var(--border-strong)', borderRadius: '8px' }, onclick: () => gotoTomorrow() }, '后一天 →'),
+      el('button', { class: 'btn', onclick: () => addTaskForDate(TASK_VIEW.day) }, '+ 添加')
+    )
+  ));
+
+  const dayTasks = DB.tasks
+    .filter(t => t.date === TASK_VIEW.day)
+    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+  // 完成进度条
+  const doneN = dayTasks.filter(t => t.done).length;
+  const totalN = dayTasks.length;
+  right.appendChild(el('div', { class: 'task-progress' },
+    el('div', { class: 'prog-bar' },
+      el('div', { class: 'prog-fill', style: { width: (totalN ? (doneN / totalN * 100) : 0) + '%' } })
+    ),
+    el('div', { class: 'prog-label' }, totalN ? `${doneN} / ${totalN} 已完成` : '当日尚无任务')
+  ));
+
+  if (dayTasks.length === 0) {
+    right.appendChild(el('div', { class: 'empty' },
+      el('div', { class: 'big' }, '📝'),
+      el('div', {}, '这天还没有计划'),
+      el('div', { style: { marginTop: '14px' } },
+        el('button', { class: 'btn', onclick: () => addTaskForDate(TASK_VIEW.day) }, '+ 添加第一个任务')
+      )
+    ));
   } else {
     const list = el('div', { class: 'item-list' });
-    [...DB.tasks].sort((a,b)=>(a.time||'').localeCompare(b.time||'')).forEach(t => {
-      list.appendChild(el('div', { class: 'item ' + (t.done ? 'done' : '') },
+    dayTasks.forEach(t => {
+      const isCarry = !!t.carriedFrom;
+      const row = el('div', { class: 'item task-item ' + (t.done ? 'done' : '') },
         el('div', { class: 'checkbox', onclick: () => toggleTask(t.id) }, t.done ? '✓' : ''),
-        el('div', { class: 'item-main' }, el('div', { class: 'item-text' }, t.text), el('div', { class: 'item-meta' }, `时间 ${t.time || '未指定'}`)),
-        el('div', { class: 'item-actions' }, el('button', { class: 'icon-btn del', onclick: () => deleteItem('tasks', t.id) }, '🗑'))
-      ));
+        el('div', { class: 'item-main' },
+          isCarry ? el('span', { class: 'tag yellow', style: { fontSize: '10px', marginBottom: '4px' } }, `⏎ 顺延自 ${t.carriedFrom}`) : null,
+          el('div', { class: 'item-text' }, t.text),
+          el('div', { class: 'item-meta' }, t.time ? `${t.time}` : '未指定时间')
+        ),
+        el('div', { class: 'item-actions' },
+          el('button', { class: 'icon-btn del', onclick: () => deleteItem('tasks', t.id) }, '🗑'))
+      );
+      list.appendChild(row);
     });
-    wrap.appendChild(list);
+    right.appendChild(list);
   }
+
+  twoPane.appendChild(right);
+  wrap.appendChild(twoPane);
+
+  // 当日小想法/备注输入（图片右下方有空白文本框）
+  right.appendChild(el('div', { class: 'task-note' },
+    el('div', { class: 'task-note-label' }, '当日想法 · 备注'),
+    (() => {
+      const ta = el('textarea', { id: 'task-note-' + TASK_VIEW.day, rows: '3', placeholder: '今天的一些想法…' });
+      ta.value = getTaskNote(TASK_VIEW.day);
+      ta.addEventListener('input', () => setTaskNote(TASK_VIEW.day, ta.value));
+      return ta;
+    })()
+  ));
+
   return wrap;
 }
-function addTask() {
-  const time = $('#taskTime').value; const text = $('#taskText').value.trim();
-  if (!text) { toast('请填写任务内容'); return; }
-  DB.tasks.push({ id: cid(), time, text, done: false, createdAt: Date.now() }); saveDB();
-  $('#taskText').value = ''; render();
+
+function buildDayCell(year, month, day, key, otherMonth) {
+  const today = todayKey();
+  const status = dayStatus(key);
+  const selected = TASK_VIEW.day === key;
+  const isToday = key === today;
+  const cell = el('div', {
+    class: 'cal-cell' +
+      (otherMonth ? ' other' : '') +
+      (selected ? ' selected' : '') +
+      (isToday ? ' today' : '') +
+      (status !== 'none' ? ' st-' + status : ''),
+    onclick: () => { TASK_VIEW.day = key; render(); }
+  }, el('div', { class: 'cal-day' }, day));
+  if (status !== 'none' && !otherMonth) {
+    cell.appendChild(el('div', { class: 'cal-status' }, statusDot(status)));
+  }
+  return cell;
 }
-function toggleTask(id) { const t = DB.tasks.find(x=>x.id===id); t.done = !t.done; saveDB(); render(); }
+
+function statusDot(status) {
+  if (status === 'allDone') return el('span', { class: 'dot dot-allDone', title: '全部完成' });
+  if (status === 'partial') return el('span', { class: 'dot dot-partial', title: '部分完成' });
+  if (status === 'planned') return el('span', { class: 'dot dot-planned', title: '已制定' });
+  if (status === 'pastUndone') return el('span', { class: 'dot dot-pastUndone', title: '未完成' });
+  return null;
+}
+
+function shiftMonth(delta) {
+  const [y, m] = TASK_VIEW.day.split('-').map(Number);
+  let ny = y, nm = m + delta;
+  if (nm < 1) { ny--; nm = 12; } else if (nm > 12) { ny++; nm = 1; }
+  // 月份变了，但保持选中同一天（如果该月没有则取末日）
+  const daysInNew = new Date(ny, nm, 0).getDate();
+  const curD = parseInt(TASK_VIEW.day.split('-')[2], 10);
+  const nd = Math.min(curD, daysInNew);
+  TASK_VIEW.day = `${ny}-${String(nm).padStart(2,'0')}-${String(nd).padStart(2,'0')}`;
+  render();
+}
+
+function gotoYesterday() {
+  TASK_VIEW.day = shiftDateKey(TASK_VIEW.day, -1);
+  render();
+}
+function gotoTomorrow() {
+  TASK_VIEW.day = shiftDateKey(TASK_VIEW.day, 1);
+  render();
+}
+function goToToday() {
+  TASK_VIEW.day = todayKey();
+  render();
+}
+
+function weekdayLabel(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const names = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  return names[new Date(y, m - 1, d).getDay()];
+}
+
+// 当日小想法存放在 DB.taskNotes = { 'YYYY-MM-DD': '...' }
+function getTaskNote(dateKey) {
+  DB.taskNotes = DB.taskNotes || {};
+  return DB.taskNotes[dateKey] || '';
+}
+function setTaskNote(dateKey, val) {
+  DB.taskNotes = DB.taskNotes || {};
+  DB.taskNotes[dateKey] = val;
+  saveDB();
+}
+
+function addTaskForDate(dateKey) {
+  openModal('添加任务 · ' + dateKey, (content, actions) => {
+    content.appendChild(formRow('日期', (() => {
+      const i = el('input', { type: 'date', id: 'task-date', value: dateKey });
+      return i;
+    })()));
+    content.appendChild(formRow('时间', el('input', { type: 'time', id: 'task-time', value: '09:00' })));
+    const t = el('textarea', { id: 'task-text', rows: '2', placeholder: '做什么？' });
+    content.appendChild(formRow('任务内容', t));
+    actions.appendChild(button('保存', { onclick: () => {
+      const text = $('#task-text').value.trim();
+      if (!text) { toast('请填写任务内容'); return; }
+      const dt = $('#task-date').value || dateKey;
+      const tm = $('#task-time').value || '';
+      DB.tasks.push({ id: cid(), date: dt, time: tm, text, done: false, createdAt: Date.now() });
+      saveDB();
+      TASK_VIEW.day = dt;
+      closeModal();
+      toast('已添加');
+      render();
+    }}));
+  });
+}
+
+function toggleTask(id) {
+  const t = DB.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  saveDB();
+  render();
+}
 
 /* ===================== 快速捕记 ===================== */
 function renderCapture() {
@@ -1355,14 +1799,12 @@ function renderMedia(filter = 'all') {
   }
   const grid = el('div', { class: 'media-grid' });
   items.forEach(m => {
-    grid.appendChild(el('div', { class: 'media-card' },
-      el('div', { class: 'poster' }, m.emoji || (m.type === 'series' ? '📺' : '🎬')),
+    grid.appendChild(el('div', { class: 'media-card media-clean' },
       el('div', { class: 'm-title' }, m.title),
       el('div', { class: 'm-sub' }, (m.type === 'series' ? '剧集' : '电影') + (m.year ? ` · ${m.year}` : '')),
-      el('div', { class: 'm-rating' }, m.rating ? '★'.repeat(Math.min(5, m.rating)) + '☆'.repeat(5 - Math.min(5, m.rating)) : '未评分'),
-      el('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap' } },
+      el('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' } },
         el('span', { class: 'tag ' + (m.status === 'done' ? 'green' : 'gray') }, m.status === 'done' ? '已看' : '想看'),
-        m.note ? el('span', { class: 'tag gray', style: { maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, title: m.note }, m.note) : null
+        m.note ? el('span', { class: 'tag gray', style: { maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, title: m.note }, m.note) : null
       ),
       el('div', { class: 'actions' },
         el('button', { class: 'btn-ghost', style: { padding: '6px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-strong)' }, onclick: () => toggleMediaStatus(m.id) }, m.status === 'done' ? '移回想看' : '标记已看'),
@@ -1375,7 +1817,7 @@ function renderMedia(filter = 'all') {
 }
 function toggleMediaStatus(id) {
   const m = DB.media.find(x=>x.id===id); m.status = m.status === 'done' ? 'want' : 'done';
-  if (m.status === 'done' && !m.rating) m.rating = 4; saveDB(); render();
+  saveDB(); render();
 }
 function addMediaDialog() {
   openModal('添加影视', (content, actions) => {
@@ -1383,12 +1825,10 @@ function addMediaDialog() {
     content.appendChild(formRow('类型', el('select', { id: 'm-type' }, el('option', { value: 'movie' }, '电影'), el('option', { value: 'series' }, '剧集'))));
     content.appendChild(formRow('年份', input({ id: 'm-year', type: 'number', placeholder: '2024', min: '1900', max: '2100' })));
     content.appendChild(formRow('状态', el('select', { id: 'm-status' }, el('option', { value: 'want' }, '想看'), el('option', { value: 'done' }, '已看'))));
-    content.appendChild(formRow('评分（0-5）', input({ id: 'm-rating', type: 'number', min: '0', max: '5', placeholder: '可选' })));
-    content.appendChild(formRow('Emoji', input({ id: 'm-emoji', placeholder: '🎬' })));
     content.appendChild(formRow('短评 / 备注', (() => { const t = el('textarea', { id: 'm-note', rows: '2', placeholder: '一句话...' }); return t; })()));
     actions.appendChild(button('添加', { onclick: () => {
       const title = $('#m-title').value.trim(); if (!title) { toast('请填写标题'); return; }
-      DB.media.push({ id: cid(), title, type: $('#m-type').value, year: $('#m-year').value ? Number($('#m-year').value) : null, status: $('#m-status').value, rating: $('#m-rating').value ? Number($('#m-rating').value) : 0, emoji: $('#m-emoji').value.trim(), note: $('#m-note').value.trim() });
+      DB.media.push({ id: cid(), title, type: $('#m-type').value, year: $('#m-year').value ? Number($('#m-year').value) : null, status: $('#m-status').value, note: $('#m-note').value.trim() });
       saveDB(); closeModal(); toast('已添加'); render();
     }}));
   });
@@ -1424,14 +1864,19 @@ function renderSettings() {
     ),
     el('div', { class: 'set-actions' },
       el('button', { class: 'btn', onclick: saveToken }, '保存凭证'),
+      el('button', { class: 'btn', onclick: manualSync }, '🔄 立即双向同步'),
       el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: () => gistSave(true) }, '上传到云端'),
       el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: () => gistLoad(true) }, '从云端下载'),
       el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: toggleAutoSync }, SYNC.auto ? '自动同步：开' : '自动同步：关')
     ),
     el('div', { class: 'hint' },
-      '原理：数据集中存到你的 ', el('code', {}, 'GitHub Gist'), '，手机 / 电脑打开同一网页并填入同一个 Token 即可共享、自动同步。<br>',
-      '获取 Token：登录 GitHub → Settings → Developer settings → ', el('code', {}, 'Personal access tokens'), ' → Tokens (classic) → Generate new token (classic) → 勾选 ', el('code', {}, 'gist'), ' 权限 → 生成并复制。<br>',
-      '首次「上传到云端」会自动创建私有 Gist；开启「自动同步」后每次改动都会在 1.5 秒后静默上传。Token 仅保存在你本机浏览器，请妥善保管。')
+      '同步状态：',
+      el('span', { class: 'sync-indicator', style: { display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' } }),
+      el('br', {}),
+      '原理：数据集中存到你的 ', el('code', {}, 'GitHub Gist'), '，手机 / 电脑 / 平板打开同一网页并填入同一个 Token 即可共享。<br>',
+      '新设备流程：在该设备粘贴 Token 后点「保存凭证」会自动发现并接入同一云端存储，无需拷贝 Gist ID。<br>',
+      '同步策略：每次改动 1.2 秒后自动上传；同时后台每 30s 静默检查云端，<b>有新内容会自动拉取并提示</b>；切回页面 / 唤醒设备也会立即检查。<br>',
+      '获取 Token：GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → 勾选 ', el('code', {}, 'gist'), ' → 生成并复制。Token 仅保存在你本机浏览器。')
   );
   wrap.appendChild(c2);
 
@@ -1451,25 +1896,57 @@ function renderSettings() {
   wrap.appendChild(c3);
 
   // 统计
+  const habitTotal = DB.habits.reduce((s,h)=>s + Object.keys(h.log || {}).length, 0);
+  const habitDays = (() => {
+    const set = new Set();
+    DB.habits.forEach(h => Object.keys(h.log || {}).forEach(k => set.add(k)));
+    return set.size;
+  })();
   const stats = {
-    '倒数日': DB.countdowns.length, '今日任务': DB.tasks.length, '快速捕记': DB.captures.length,
-    '已打卡次数': DB.habits.reduce((s,h)=>s+Object.keys(h.log).length,0), '信息条数': DB.news.length,
-    '复盘天数': DB.replay.length, '影视条目': DB.media.length
+    '倒数日': DB.countdowns.length,
+    '每日任务(总)': DB.tasks.length,
+    '顺延中': DB.tasks.filter(t => t.carriedFrom).length,
+    '快速捕记': DB.captures.length,
+    '打卡总次数': habitTotal,
+    '累计打卡天数': habitDays,
+    '影视': DB.media.length,
+    '复盘': DB.replay.length
   };
   wrap.appendChild(el('div', { class: 'set-card' },
     el('div', { class: 'section-title' }, el('span', { class: 'ico' }, '📈'), el('span', {}, '数据概览')),
-    el('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px', marginTop: '8px' } },
-      ...Object.entries(stats).map(([k,v]) => el('div', { style: { background: 'var(--bg-3)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' } },
-        el('div', { style: { fontSize: '22px', fontWeight: '700', color: 'var(--accent)' } }, v),
-        el('div', { style: { fontSize: '12px', color: 'var(--text-2)' } }, k)))
-    )
+    el('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px', marginTop: '8px' } },
+      ...Object.entries(stats).map(([k, v]) => el('div', { style: { background: 'var(--bg-3)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border)' } },
+        el('div', { style: { fontSize: '20px', fontWeight: '700', color: 'var(--accent)' } }, v),
+        el('div', { style: { fontSize: '11px', color: 'var(--text-2)' } }, k)))
+    ),
+    el('div', { class: 'hint', style: { marginTop: '12px' } },
+      el('b', {}, '说明：'),
+      el('br', {}),
+      '· 「打卡总次数」= 所有习惯在所有天数打卡的累计次数（含同一日多习惯）。',
+      el('br', {}),
+      '· 「累计打卡天数」= 你在多少个不同的日期至少完成过一个习惯（更接近"坚持程度"）。',
+      el('br', {}),
+      '· 如果各设备上的数字不一致，是因为数据只存在该浏览器。进入「云端同步」连接后会自动一致。')
   ));
   return wrap;
 }
-function saveToken() {
+async function saveToken() {
   SYNC.token = $('#set-token').value.trim();
   saveSyncCreds();
-  toast('凭证已保存' + (SYNC.gistId ? '，可直接同步' : '，请点「上传到云端」创建存储'));
+  if (SYNC.token) {
+    // 自动发现云端：填入 token 后立刻去找现有 Gist，新设备无缝接入
+    toast('正在连接云端…');
+    const found = await gistFindExisting();
+    if (found) {
+      SYNC.gistId = found; saveSyncCreds();
+      await gistLoad(true);
+      toast('✓ 已找到现有云端存储并同步');
+    } else {
+      toast('凭证已保存，点「上传到云端」创建新存储');
+    }
+  } else {
+    toast('凭证已清空');
+  }
   render();
 }
 function toggleAutoSync() { SYNC.auto = !SYNC.auto; saveSyncCreds(); toast('自动同步已' + (SYNC.auto ? '开启' : '关闭')); render(); }
@@ -1556,8 +2033,24 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') clos
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
 render();
+updateSyncBadge();
+
 // 启动时若已开启自动同步且已连接云端，则拉取最新数据
-if (SYNC.auto && SYNC.token && SYNC.gistId) gistLoad(false);
+if (SYNC.auto && SYNC.token) {
+  (async () => {
+    if (!SYNC.gistId) { const id = await gistFindExisting(); if (id) { SYNC.gistId = id; saveSyncCreds(); } }
+    if (SYNC.gistId) { await gistLoad(false); render(); }
+  })();
+}
+
+// 后台定期拉取（30s）：检测云端是否有新内容
+setInterval(() => { if (SYNC.auto && SYNC.token && SYNC.gistId) gistPoll(); }, 30000);
+
+// 切回页面 / 唤醒设备时立即检查一次
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && SYNC.token && SYNC.gistId) gistPoll();
+});
+window.addEventListener('focus', () => { if (SYNC.token && SYNC.gistId) gistPoll(); });
 </script>
 <script>
   // PWA Service Worker 注册（让安卓 Chrome 弹出"添加到主屏幕"，并支持离线）
