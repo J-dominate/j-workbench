@@ -657,6 +657,7 @@ const SYNC = {
   lastSyncAt: 0,
   lastRemoteUpdatedAt: '',
   syncing: false,
+  pulledOnce: false, // 是否已与云端完成过一次拉取（用于防止上传覆盖旧数据）
   status: 'idle',   // idle | syncing | ok | error
   err: '',
   errAt: 0,
@@ -737,6 +738,12 @@ async function gistFindExisting() {
 async function gistSave(showToast = true, force = false) {
   if (!SYNC.token) { if (showToast) toast('请先在设置中连接云端'); return false; }
   if (SYNC.syncing && !force) return false;
+  // 防止用本地旧数据覆盖云端最新：首次同步前，先拉一次云端再上传（避免平板丢失捕记等）
+  if (SYNC.gistId && !SYNC.pulledOnce) {
+    await gistLoad(false);
+    SYNC.pulledOnce = true;
+    SYNC.syncing = true;
+  }
   SYNC.syncing = true;
   setSyncStatus('syncing');
   try {
@@ -806,6 +813,7 @@ async function gistLoad(showToast = true) {
     SYNC.lastSyncAt = Date.now();
     SYNC.lastRemoteUpdatedAt = data.updated_at || '';
     SYNC.retryCount = 0;
+    SYNC.pulledOnce = true; // 标记已完成首次拉取，此后上传才允许
     saveDB();
     saveSyncCreds();
     setSyncStatus('ok');
@@ -2157,18 +2165,20 @@ $('#mobileNav').addEventListener('click', (e) => { const btn = e.target.closest(
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-// 启动时先跑一次性迁移：清除今天习惯被误/自动勾选的残留（确保未勾选前为未勾）
-migrateClearTodayChecks();
-
-render();
-updateSyncBadge();
-
-// 启动时若已开启自动同步且已连接云端，则拉取最新数据
+// 启动时：若已连接云端，先拉取最新数据（含捕记等），再跑迁移并上传合并结果；
+// 未连接则仅本地迁移。这样保证设备永远先拿到云端最新、再决定上传，避免旧数据覆盖。
 if (SYNC.auto && SYNC.token) {
   (async () => {
     if (!SYNC.gistId) { const id = await gistFindExisting(); if (id) { SYNC.gistId = id; saveSyncCreds(); } }
-    if (SYNC.gistId) { await gistLoad(false); render(); }
+    if (SYNC.gistId) { await gistLoad(false); }
+    migrateClearTodayChecks();
+    render();
+    updateSyncBadge();
   })();
+} else {
+  migrateClearTodayChecks();
+  render();
+  updateSyncBadge();
 }
 
 // 后台定期拉取（30s）：检测云端是否有新内容
