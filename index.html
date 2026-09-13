@@ -730,8 +730,35 @@ async function gistFindExisting() {
     });
     if (!res.ok) return null;
     const arr = await res.json();
-    const found = arr.find(g => g.description === 'J Workbench Data');
-    return found ? found.id : null;
+    const cands = arr.filter(g => g.description === 'J Workbench Data');
+    if (cands.length === 0) return null;
+    if (cands.length === 1) return cands[0].id;
+    // 多个同名 Gist → 选“数据最全”的那条，避免连到空的/旧的副本
+    let best = null, bestScore = -1;
+    for (const g of cands) {
+      let score = 0;
+      let content = g.files && g.files['workbench.json'] && g.files['workbench.json'].content;
+      if (!content && g.id) {
+        try {
+          const r2 = await ghFetch(`https://api.github.com/gists/${g.id}`, {
+            headers: { 'Authorization': `Bearer ${SYNC.token}`, 'Accept': 'application/vnd.github+json' }
+          });
+          if (r2.ok) {
+            const j2 = await r2.json();
+            content = j2.files && j2.files['workbench.json'] && j2.files['workbench.json'].content;
+          }
+        } catch (e) { /* ignore */ }
+      }
+      if (content) {
+        try {
+          const d = JSON.parse(content);
+          for (const k of ['captures', 'tasks', 'habits', 'countdowns', 'news', 'replay', 'media'])
+            score += (d[k] ? d[k].length : 0);
+        } catch (e) { /* ignore */ }
+      }
+      if (score > bestScore) { bestScore = score; best = g; }
+    }
+    return best ? best.id : cands[0].id;
   } catch (e) { return null; }
 }
 
@@ -765,6 +792,14 @@ async function gistSave(showToast = true, force = false) {
       headers: { 'Authorization': `Bearer ${SYNC.token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' },
       body: JSON.stringify(body)
     });
+    if (res.status === 404 && SYNC.gistId) {
+      // 当前 Gist 已失效（被清理/换设备）→ 重新发现；没有则下次新建
+      SYNC.gistId = ''; saveSyncCreds();
+      const found = await gistFindExisting();
+      if (found) SYNC.gistId = found;
+      saveSyncCreds();
+      return gistSave(showToast, true);
+    }
     if (!res.ok) throw Object.assign(new Error('HTTP ' + res.status), { status: res.status });
     const data = await res.json();
     if (!SYNC.gistId) SYNC.gistId = data.id;
@@ -803,6 +838,14 @@ async function gistLoad(showToast = true) {
     const res = await ghFetch(`https://api.github.com/gists/${SYNC.gistId}`, {
       headers: { 'Authorization': `Bearer ${SYNC.token}`, 'Accept': 'application/vnd.github+json' }
     });
+    if (res.status === 404) {
+      // 当前云端存储已不存在（换设备 / 被清理）→ 清空并重试发现，否则提示新建
+      SYNC.gistId = ''; saveSyncCreds();
+      const found = await gistFindExisting();
+      if (found) { SYNC.gistId = found; saveSyncCreds(); return gistLoad(showToast); }
+      if (showToast) toast('尚未创建云端存储，请先点「上传到云端」');
+      return false;
+    }
     if (!res.ok) throw Object.assign(new Error('HTTP ' + res.status), { status: res.status });
     const data = await res.json();
     const content = data.files['workbench.json'] ? data.files['workbench.json'].content : null;
