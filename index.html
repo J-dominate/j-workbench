@@ -1990,7 +1990,8 @@ function renderSettings() {
       el('button', { class: 'btn', onclick: manualSync }, '🔄 立即双向同步'),
       el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: () => gistSave(true) }, '上传到云端'),
       el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: () => gistLoad(true) }, '从云端下载'),
-      el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: toggleAutoSync }, SYNC.auto ? '自动同步：开' : '自动同步：关')
+      el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: toggleAutoSync }, SYNC.auto ? '自动同步：开' : '自动同步：关'),
+      el('button', { class: 'btn-ghost', id: 'installBtn', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: installApp, title: '把工作台装到手机 / 平板 / 电脑桌面，像 App 一样离线打开' }, '📲 安装到桌面')
     ),
     el('div', { class: 'hint' },
       '同步状态：',
@@ -2178,6 +2179,33 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && SYNC.token && SYNC.gistId) gistPoll();
 });
 window.addEventListener('focus', () => { if (SYNC.token && SYNC.gistId) gistPoll(); });
+
+// ============ PWA：安装到桌面 ============
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();              // 阻止浏览器默认横幅，改由我们自己的按钮触发
+  deferredInstallPrompt = e;
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  toast('已安装到桌面 ✓');
+});
+function installApp() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
+    return;
+  }
+  // 浏览器未触发安装事件（如 iOS Safari 走分享菜单）→ 给出对应手动步骤
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/i.test(ua)) {
+    toast('iOS：点底部「分享」按钮 → 「添加到主屏幕」');
+  } else if (/Android/i.test(ua)) {
+    toast('安卓：点右上角 ⋮ → 「安装应用」/「添加到主屏幕」');
+  } else {
+    toast('桌面：点地址栏右侧 📥 图标，或菜单 →「安装 J · 个人工作台」');
+  }
+}
 </script>
 <script>
   // PWA Service Worker 注册（让安卓 Chrome 弹出"添加到主屏幕"，并支持离线）
