@@ -1440,7 +1440,7 @@ function renderHabitRow(h, today) {
   if (h.hasTime) {
     const tval = (l && l.time) || '';
     const ti = el('input', { type: 'time', value: tval, class: 'habit-time', onchange: (e) => {
-      if (!h.log[today] || typeof h.log[today] !== 'object') h.log[today] = { done: true };
+      if (!h.log[today] || typeof h.log[today] !== 'object') h.log[today] = {};
       h.log[today].time = e.target.value;
       saveDB();
       refreshHabitTable();
@@ -1450,7 +1450,7 @@ function renderHabitRow(h, today) {
   if (h.hasNote) {
     const nval = (l && l.note) || '';
     const ni = el('input', { type: 'text', value: nval, placeholder: '类型(可选)', class: 'habit-note', onchange: (e) => {
-      if (!h.log[today] || typeof h.log[today] !== 'object') h.log[today] = { done: true };
+      if (!h.log[today] || typeof h.log[today] !== 'object') h.log[today] = {};
       h.log[today].note = e.target.value;
       saveDB();
       refreshHabitTable();
