@@ -629,6 +629,24 @@ function saveDB() {
   scheduleSync();
 }
 
+// 一次性迁移：清除“今天”所有习惯被误/自动勾选的残留，确保未勾选前保持未勾。
+// 仅运行一次（DB._migClearTodayChecks 标记），只清当天、保留历史打卡；之后用户可正常手动打勾。
+function migrateClearTodayChecks() {
+  if (DB._migClearTodayChecks) return;
+  const tk = todayKey();
+  DB.habits.forEach(h => {
+    const e = h.log && h.log[tk];
+    if (!e) return;
+    if (h.kind === 'water') {
+      if (Array.isArray(e.cups)) e.cups = e.cups.map(() => false);
+    } else if (typeof e === 'object' && e.done) {
+      e.done = false;
+    }
+  });
+  DB._migClearTodayChecks = true;
+  saveDB();
+}
+
 let DB = loadDB();
 
 /* ===================== 云同步（GitHub Gist） ===================== */
@@ -2137,6 +2155,9 @@ $('#nav').addEventListener('click', (e) => { const item = e.target.closest('.nav
 $('#mobileNav').addEventListener('click', (e) => { const btn = e.target.closest('button'); if (btn) goto(btn.dataset.page); });
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+// 启动时先跑一次性迁移：清除今天习惯被误/自动勾选的残留（确保未勾选前为未勾）
+migrateClearTodayChecks();
 
 render();
 updateSyncBadge();
