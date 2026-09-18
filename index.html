@@ -769,7 +769,25 @@ async function gistSave(showToast = true, force = false) {
   if (SYNC.gistId && !SYNC.pulledOnce) {
     await gistLoad(false);
     SYNC.pulledOnce = true;
-    SYNC.syncing = true;
+  }
+  // 乐观锁：上传前若云端比本地已知版本更新，先合并云端新增，再上传，避免覆盖别人刚改的内容
+  if (SYNC.gistId) {
+    try {
+      const metaRes = await ghFetch(`https://api.github.com/gists/${SYNC.gistId}`, {
+        headers: { 'Authorization': `Bearer ${SYNC.token}`, 'Accept': 'application/vnd.github+json' }
+      }, 1);
+      if (metaRes && metaRes.ok) {
+        const meta = await metaRes.json();
+        if (meta.updated_at && meta.updated_at !== SYNC.lastRemoteUpdatedAt) {
+          const content = meta.files && meta.files['workbench.json'] && meta.files['workbench.json'].content;
+          if (content) {
+            const remote = JSON.parse(content);
+            DB = mergeDB(DB, remote);
+            SYNC.lastRemoteUpdatedAt = meta.updated_at;
+          }
+        }
+      }
+    } catch (e) { /* 拉取失败不影响上传，下次轮询再合并 */ }
   }
   SYNC.syncing = true;
   setSyncStatus('syncing');
@@ -820,6 +838,46 @@ async function gistSave(showToast = true, force = false) {
   } finally { SYNC.syncing = false; }
 }
 
+// 按 id 合并两份 DB：各自独立的新增条目都保留，冲突（同 id）取较新者；habits.log 按日期深合并
+function _tsOf(it) { return (it && (it.updatedAt || it.createdAt || it.ts)) || 0; }
+function _mergeList(localArr, remoteArr, getId) {
+  const map = new Map();
+  for (const it of (localArr || [])) { const id = getId(it); if (id) map.set(id, it); }
+  for (const it of (remoteArr || [])) {
+    const id = getId(it); if (!id) continue;
+    const ex = map.get(id);
+    if (!ex) map.set(id, it);
+    else map.set(id, (_tsOf(it) >= _tsOf(ex)) ? it : ex);
+  }
+  return Array.from(map.values());
+}
+function _mergeHabitLog(localLog, remoteLog) {
+  const out = { ...(localLog || {}) };
+  for (const k of Object.keys(remoteLog || {})) {
+    if (!(k in out)) { out[k] = remoteLog[k]; continue; }
+    const l = out[k], r = remoteLog[k];
+    if (Array.isArray(l) && Array.isArray(r)) out[k] = l.map((v, i) => (r[i] ? r[i] : v));
+    else out[k] = (r && r.done) ? r : (l && l.done ? l : (r || l));
+  }
+  return out;
+}
+function mergeDB(local, remote) {
+  const base = { ...DEFAULT_DATA, ...local,
+    profile: { ...DEFAULT_DATA.profile, ...(remote.profile || {}), ...(local.profile || {}) } };
+  const listKeys = ['tasks', 'captures', 'countdowns', 'news', 'replay', 'media'];
+  for (const k of listKeys) base[k] = _mergeList(local[k], remote[k], it => it && it.id);
+  const hmap = new Map();
+  for (const h of (local.habits || [])) hmap.set(h.id, { ...h });
+  for (const h of (remote.habits || [])) {
+    const ex = hmap.get(h.id);
+    if (!ex) hmap.set(h.id, { ...h });
+    else { ex.log = _mergeHabitLog(ex.log, h.log); hmap.set(h.id, ex); }
+  }
+  base.habits = Array.from(hmap.values());
+  base.taskNotes = remote.taskNotes || local.taskNotes || {};
+  return base;
+}
+
 async function gistLoad(showToast = true) {
   if (!SYNC.token) { if (showToast) toast('请先在设置中连接云端'); return false; }
   if (!SYNC.gistId) {
@@ -851,8 +909,8 @@ async function gistLoad(showToast = true) {
     const content = data.files['workbench.json'] ? data.files['workbench.json'].content : null;
     if (!content) throw new Error('云端暂无可读数据');
     const parsed = JSON.parse(content);
-    // 合并：保留本地未同步的更改（简单的全量替换，因为本工具的数据多为轻量文本）
-    DB = { ...DEFAULT_DATA, ...parsed, profile: { ...DEFAULT_DATA.profile, ...(parsed.profile || {}) }, taskNotes: parsed.taskNotes || {} };
+    // 合并：按 id 合并云端与本地，各自独立的新增都保留，冲突取较新者（见 mergeDB）
+    DB = mergeDB(DB, parsed);
     SYNC.lastSyncAt = Date.now();
     SYNC.lastRemoteUpdatedAt = data.updated_at || '';
     SYNC.retryCount = 0;
@@ -886,7 +944,7 @@ async function gistPoll() {
       const content = meta.files['workbench.json'] ? meta.files['workbench.json'].content : null;
       if (!content) return;
       const parsed = JSON.parse(content);
-      DB = { ...DEFAULT_DATA, ...parsed, profile: { ...DEFAULT_DATA.profile, ...(parsed.profile || {}) }, taskNotes: parsed.taskNotes || {} };
+      DB = mergeDB(DB, parsed);
       SYNC.lastRemoteUpdatedAt = meta.updated_at;
       SYNC.lastSyncAt = Date.now();
       SYNC.retryCount = 0;
@@ -2044,6 +2102,11 @@ function renderSettings() {
       el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: toggleAutoSync }, SYNC.auto ? '自动同步：开' : '自动同步：关'),
       el('button', { class: 'btn-ghost', id: 'installBtn', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: installApp, title: '把工作台装到手机 / 平板 / 电脑桌面，像 App 一样离线打开' }, '📲 安装到桌面')
     ),
+    el('div', { class: 'set-actions', style: { marginTop: '8px', flexWrap: 'wrap' } },
+      el('span', { style: { fontSize: '12px', color: 'var(--text-2)', alignSelf: 'center' } }, '云端存储 ID：'),
+      el('code', { style: { fontSize: '12px', padding: '2px 6px', background: 'var(--bg-1)', borderRadius: '4px' } }, SYNC.gistId ? (SYNC.gistId.slice(0,8) + '…' + SYNC.gistId.slice(-4)) : '未创建'),
+      el('button', { class: 'btn-ghost', style: { padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12px' }, onclick: forceResync, title: '清空本地缓存的云端 ID 并重新连接正确的云端存储（用于解决连错副本 / 平板看不到数据）' }, '🔗 强制重连')
+    ),
     el('div', { class: 'hint' },
       '同步状态：',
       el('span', { class: 'sync-indicator', style: { display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' } }),
@@ -2126,6 +2189,19 @@ async function saveToken() {
   render();
 }
 function toggleAutoSync() { SYNC.auto = !SYNC.auto; saveSyncCreds(); toast('自动同步已' + (SYNC.auto ? '开启' : '关闭')); render(); }
+// 强制重连：清空本地缓存的（可能失效/错误的）Gist ID，重新发现并接入正确的云端存储
+async function forceResync() {
+  if (!SYNC.token) { toast('请先在设置中填写 GitHub Token'); return; }
+  SYNC.gistId = '';
+  saveSyncCreds();
+  toast('正在重新发现云端存储…');
+  const found = await gistFindExisting();
+  if (!found) { toast('未找到现有云端存储，点「上传到云端」创建'); render(); return; }
+  SYNC.gistId = found; saveSyncCreds();
+  await gistLoad(true);
+  toast('✓ 已重连并同步到正确云端');
+  render();
+}
 function exportData() {
   const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
