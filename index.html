@@ -338,12 +338,20 @@
   .habit-left .h-sub { font-size: 12px; color: var(--text-2); margin-top: 4px; }
   .habit-controls { display: flex; gap: 14px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
   .cup-check, .check-toggle {
-    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
     font-size: 13px; color: var(--text-2); user-select: none;
   }
   .cup-check input, .check-toggle input {
-    width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent);
+    position: absolute; opacity: 0; width: 0; height: 0; margin: 0; cursor: pointer;
   }
+  /* 自定义蓝色钩：未勾选为灰色空框，亲自勾选后变蓝底白钩 */
+  .hk-box {
+    width: 18px; height: 18px; min-width: 18px; border: 2px solid var(--border-strong);
+    border-radius: 5px; display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 700; line-height: 1;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .hk-box.on { background: var(--accent); border-color: var(--accent); }
   .cup-check.done, .check-toggle.done { color: var(--text); font-weight: 500; }
   .habit-time {
     padding: 5px 8px; border: 1px solid var(--border-strong); border-radius: 6px;
@@ -1154,12 +1162,12 @@ function addCountdown() {
   DB.countdowns.push({ id: cid(), title: t, date: d }); saveDB();
   $('#cdTitle').value = ''; $('#cdDate').value = ''; toggleCountdownAdd(); toast('已添加'); render();
 }
-function deleteCountdown(id) {
-  if (!confirm('删除这个倒数日？')) return;
+async function deleteCountdown(id) {
+  if (!await askConfirm('删除这个倒数日？此操作不可恢复。')) return;
   DB.countdowns = DB.countdowns.filter(c => c.id !== id); saveDB(); toast('已删除'); render();
 }
-function editProfile(field) {
-  const val = prompt(field === 'name' ? '修改你的名字' : '修改标语', DB.profile[field]);
+async function editProfile(field) {
+  const val = await askPrompt(field === 'name' ? '修改你的名字' : '修改标语', DB.profile[field]);
   if (val === null) return;
   const trimmed = val.trim(); if (!trimmed) return;
   DB.profile[field] = trimmed; saveDB(); render();
@@ -1528,13 +1536,17 @@ function renderHabitRow(h, today) {
     const labels = ['早一杯', '午一杯', '晚一杯'];
     const checks = el('div', { style: { display: 'flex', gap: '14px', flexWrap: 'wrap' } });
     labels.forEach((label, i) => {
+      const box = el('span', { class: 'hk-box' + (log.cups[i] ? ' on' : '') }, log.cups[i] ? '✓' : '');
       const wrapL = el('label', { class: 'cup-check' + (log.cups[i] ? ' done' : '') },
         el('input', { type: 'checkbox', checked: log.cups[i], onchange: (e) => {
           log.cups[i] = e.target.checked;
           saveDB();
           wrapL.classList.toggle('done', e.target.checked);
+          box.classList.toggle('on', e.target.checked);
+          box.textContent = e.target.checked ? '✓' : '';
           refreshHabitTable();
         }}),
+        box,
         el('span', {}, label)
       );
       checks.appendChild(wrapL);
@@ -1551,6 +1563,7 @@ function renderHabitRow(h, today) {
   // 普通 check 类型
   let l = getLogObj(h, today);
   const isDone = isHabitDone(l);
+  const box = el('span', { class: 'hk-box' + (isDone ? ' on' : '') }, isDone ? '✓' : '');
   const check = el('label', { class: 'check-toggle' + (isDone ? ' done' : '') },
     el('input', { type: 'checkbox', checked: isDone, onchange: (e) => {
       const v = e.target.checked;
@@ -1559,8 +1572,11 @@ function renderHabitRow(h, today) {
       if (!v && !h.hasTime && !h.hasNote) delete h.log[today];
       saveDB();
       check.classList.toggle('done', v);
+      box.classList.toggle('on', v);
+      box.textContent = v ? '✓' : '';
       refreshHabitTable();
-    }})
+    }}),
+    box
   );
 
   const extras = [];
@@ -2001,8 +2017,8 @@ function renderReplay() {
         ),
         el('div', { class: 'emo' }, el('span', {}, '情绪'), el('span', { class: 'scale' }, moodEmoji(r2.mood))),
         el('div', { style: { display: 'flex', gap: '8px', marginTop: '12px' } },
-          el('button', { class: 'btn-ghost', style: { padding: '6px 12px', fontSize: '12px', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--danger)' }, onclick: () => {
-            if (!confirm('删除 ' + r2.date + ' 的复盘？')) return;
+          el('button', { class: 'btn-ghost', style: { padding: '6px 12px', fontSize: '12px', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--danger)' }, onclick: async () => {
+            if (!await askConfirm('删除 ' + r2.date + ' 的复盘？此操作不可恢复。')) return;
             DB.replay = DB.replay.filter(x => x.id !== r2.id); saveDB(); render(); toast('已删除');
           } }, '删除')
         )
@@ -2102,6 +2118,11 @@ function renderSettings() {
       el('button', { class: 'btn-ghost', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: toggleAutoSync }, SYNC.auto ? '自动同步：开' : '自动同步：关'),
       el('button', { class: 'btn-ghost', id: 'installBtn', style: { padding: '9px 14px', borderRadius: '8px', border: '1px solid var(--border-strong)' }, onclick: installApp, title: '把工作台装到手机 / 平板 / 电脑桌面，像 App 一样离线打开' }, '📲 安装到桌面')
     ),
+    el('div', { class: 'set-actions', style: { marginTop: '8px', flexWrap: 'wrap' } },
+      el('span', { style: { fontSize: '12px', color: 'var(--text-2)', alignSelf: 'center' } }, '云端存储 ID：'),
+      el('code', { style: { fontSize: '12px', padding: '2px 6px', background: 'var(--bg-1)', borderRadius: '4px' } }, SYNC.gistId ? (SYNC.gistId.slice(0,8) + '…' + SYNC.gistId.slice(-4)) : '未创建'),
+      el('button', { class: 'btn-ghost', style: { padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)', fontSize: '12px' }, onclick: forceResync, title: '清空本地缓存的云端 ID 并重新连接正确的云端存储（用于解决连错副本 / 平板看不到数据）' }, '🔗 强制重连')
+    ),
     el('div', { class: 'hint' },
       '同步状态：',
       el('span', { class: 'sync-indicator', style: { display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '4px' } }),
@@ -2184,6 +2205,19 @@ async function saveToken() {
   render();
 }
 function toggleAutoSync() { SYNC.auto = !SYNC.auto; saveSyncCreds(); toast('自动同步已' + (SYNC.auto ? '开启' : '关闭')); render(); }
+// 强制重连：清空本地缓存的（可能失效/错误的）Gist ID，重新发现并接入正确的云端存储
+async function forceResync() {
+  if (!SYNC.token) { toast('请先在设置中填写 GitHub Token'); return; }
+  SYNC.gistId = '';
+  saveSyncCreds();
+  toast('正在重新发现云端存储…');
+  const found = await gistFindExisting();
+  if (!found) { toast('未找到现有云端存储，点「上传到云端」创建'); render(); return; }
+  SYNC.gistId = found; saveSyncCreds();
+  await gistLoad(true);
+  toast('✓ 已重连并同步到正确云端');
+  render();
+}
 function exportData() {
   const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -2196,10 +2230,10 @@ function importData() {
   inp.onchange = (e) => {
     const file = e.target.files[0]; if (!file) return;
     const r = new FileReader();
-    r.onload = () => { try {
+    r.onload = async () => { try {
       const data = JSON.parse(r.result);
       if (!data.profile) throw new Error('文件格式不正确');
-      if (!confirm('导入会覆盖当前所有数据，确定继续？')) return;
+      if (!await askConfirm('导入会覆盖当前所有数据，确定继续？此操作不可恢复。')) return;
       DB = { ...DEFAULT_DATA, ...data, profile: { ...DEFAULT_DATA.profile, ...(data.profile||{}) } };
       saveDB(); toast('导入成功'); render();
     } catch (err) { toast('导入失败：' + err.message); } };
@@ -2207,9 +2241,9 @@ function importData() {
   };
   inp.click();
 }
-function clearAllData() {
-  if (!confirm('⚠️ 确定清空所有数据？此操作不可恢复，建议先导出备份。')) return;
-  if (!confirm('再次确认：真的要清空吗？')) return;
+async function clearAllData() {
+  if (!await askConfirm('⚠️ 确定清空所有数据？此操作不可恢复，建议先导出备份。')) return;
+  if (!await askConfirm('再次确认：真的要清空吗？')) return;
   DB = JSON.parse(JSON.stringify(DEFAULT_DATA)); saveDB(); toast('已清空'); render();
 }
 
@@ -2233,8 +2267,39 @@ function openModal(title, build) {
   inner.appendChild(content); inner.appendChild(actions); mask.classList.add('show'); build(content, actions);
 }
 function closeModal() { $('#modal').classList.remove('show'); }
-function deleteItem(key, id) {
-  if (!confirm('确认删除？')) return;
+// 页面内确认弹窗：替代 window.confirm（后者在 iOS / 安卓 PWA 独立模式下是 no-op，会导致删除/清空点击无反应）
+function askConfirm(msg) {
+  return new Promise((resolve) => {
+    const mask = $('#modal'); const inner = $('#modal-inner');
+    inner.innerHTML = '';
+    inner.appendChild(el('h3', {}, '请确认'));
+    inner.appendChild(el('div', { style: { fontSize: '14px', color: 'var(--text)', padding: '6px 0', lineHeight: 1.5 } }, msg));
+    const actions = el('div', { class: 'modal-actions' });
+    actions.appendChild(button('取消', { onclick: () => { closeModal(); resolve(false); } }));
+    actions.appendChild(button('确认', { class: 'btn-danger', onclick: () => { closeModal(); resolve(true); } }));
+    inner.appendChild(actions);
+    mask.classList.add('show');
+  });
+}
+// 页面内输入弹窗：替代 window.prompt（同上，PWA 独立模式下是 no-op）
+function askPrompt(title, defVal) {
+  return new Promise((resolve) => {
+    const mask = $('#modal'); const inner = $('#modal-inner');
+    inner.innerHTML = '';
+    inner.appendChild(el('h3', {}, title));
+    const input = el('input', { type: 'text', value: defVal || '', style: { width: '100%', padding: '9px 12px', border: '1px solid var(--border-strong)', borderRadius: '8px', fontSize: '14px', marginTop: '8px', outline: 'none' } });
+    inner.appendChild(input);
+    const actions = el('div', { class: 'modal-actions' });
+    actions.appendChild(button('取消', { onclick: () => { closeModal(); resolve(null); } }));
+    actions.appendChild(button('保存', { onclick: () => { closeModal(); resolve(input.value); } }));
+    inner.appendChild(actions);
+    mask.classList.add('show');
+    setTimeout(() => input.focus(), 50);
+  });
+}
+async function deleteItem(key, id) {
+  const ok = await askConfirm('确认删除？此操作不可恢复。');
+  if (!ok) return;
   DB[key] = DB[key].filter(x => x.id !== id); saveDB(); toast('已删除'); render();
 }
 
