@@ -261,7 +261,6 @@
 .task-crumb { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: var(--text); }
 .task-crumb .tag { font-size: 12px; padding: 2px 8px; }
 .task-pane { display: grid; grid-template-columns: minmax(260px, 330px) 1fr; gap: 18px; }
-@media (max-width: 760px) { .task-pane { grid-template-columns: 1fr; } }
 
 .task-cal { padding: 14px; }
 .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -531,8 +530,9 @@
     .feature-grid { grid-template-columns: repeat(3, 1fr); }
     .habit-grid { grid-template-columns: 1fr; }
   }
-  @media (max-width: 800px) {
+  @media (max-width: 767px) {
     .app { grid-template-columns: 1fr; }
+    .task-pane { grid-template-columns: 1fr; }
     .sidebar { display: none; }
     .main { padding: 22px 16px 92px; }
     .greeting { margin: 14px 0 36px; }
