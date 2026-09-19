@@ -395,14 +395,16 @@
     min-height: 44px; font-family: inherit;
   }
   .kiss-ta:focus { border-color: var(--accent); }
-  .kiss-add {
+  .kiss-tools { display: flex; gap: 8px; margin-top: 8px; }
+  .kiss-add, .kiss-clear {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; margin-top: 8px;
-    border: 1px solid var(--border-strong); border-radius: 50%;
-    color: var(--text-2); font-size: 18px; cursor: pointer;
-    transition: all 0.15s;
+    padding: 5px 14px; border-radius: 16px; cursor: pointer;
+    border: 1px solid var(--border-strong); background: var(--bg-1);
+    color: var(--text-2); font-size: 13px; font-weight: 600; transition: all 0.15s;
   }
-  .kiss-add:hover { border-color: var(--accent); color: var(--accent); }
+  .kiss-add:hover, .kiss-clear:hover { border-color: var(--accent); color: var(--accent); }
+  .kiss-clear { margin-left: auto; }
+  .kiss-clear:hover { border-color: var(--danger); color: var(--danger); }
   .kiss-mood { padding-top: 18px; margin-top: 6px; border-top: 1px solid var(--border); }
   .mood-picker { display: flex; gap: 14px; align-items: center; margin-top: 10px; }
   .mood-btn {
@@ -666,6 +668,29 @@ function dedupCountdowns(arr) {
   }
   return out;
 }
+function _replayScore(r) {
+  return (r.keep || '').length + (r.improve || '').length + (r.start || '').length +
+         (r.stop || '').length + (r.mood ? 1 : 0);
+}
+function dedupReplay(arr) {
+  const seen = new Map();
+  const out = [];
+  for (const r of (arr || [])) {
+    const sig = String(r.date || '').trim();
+    if (!sig) { out.push(r); continue; }
+    const ex = seen.get(sig);
+    if (!ex) { seen.set(sig, r); out.push(r); continue; }
+    // 同名日期只保留信息更完整 / 更新的那一条，避免跨设备重复
+    const exScore = _replayScore(ex), rScore = _replayScore(r);
+    const exTs = ex.updatedAt || ex.createdAt || 0, rTs = r.updatedAt || r.createdAt || 0;
+    if (rScore > exScore || (rScore === exScore && rTs > exTs)) {
+      const idx = out.indexOf(ex);
+      if (idx >= 0) out[idx] = r;
+      seen.set(sig, r);
+    }
+  }
+  return out;
+}
 
 function loadDB() {
   try {
@@ -676,6 +701,7 @@ function loadDB() {
     // 加载时清理历史重复（幂等，安全）
     db.tasks = dedupTasks(db.tasks);
     db.countdowns = dedupCountdowns(db.countdowns);
+    db.replay = dedupReplay(db.replay);
     return db;
   } catch (e) { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
 }
@@ -925,6 +951,7 @@ function mergeDB(local, remote) {
   // 按 id 合并后，再按语义去重（处理多设备各自创建同内容但不同 id 的项）
   base.tasks = dedupTasks(base.tasks);
   base.countdowns = dedupCountdowns(base.countdowns);
+  base.replay = dedupReplay(base.replay);
   const hmap = new Map();
   for (const h of (local.habits || [])) hmap.set(h.id, { ...h });
   for (const h of (remote.habits || [])) {
@@ -1957,7 +1984,7 @@ function moodEmoji(m) {
 }
 
 function renderReplayKISS(r, today) {
-  // 单段：title + hint + textarea + 加入按钮
+  // 单段：title + hint + textarea（实时存盘）+ 加一条 / 清空 按钮
   const sections = [
     { key: 'keep',    label: 'Keep · 今天哪里做得好？',   hint: '分点写，明天继续' },
     { key: 'improve', label: 'Improve · 哪里可以更好？',  hint: '分点写，明天改进（如"读书时长未达标"）' },
@@ -1970,25 +1997,33 @@ function renderReplayKISS(r, today) {
     const area = el('div', { class: 'kiss-block' });
     area.appendChild(el('div', { class: 'kiss-title' }, s.label));
     area.appendChild(el('div', { class: 'kiss-hint' }, s.hint));
-    const ta = el('textarea', { id: taId, class: 'kiss-ta', placeholder: '加一条…', rows: '2', oninput: (e) => {
+    const ta = el('textarea', { id: taId, class: 'kiss-ta', placeholder: '写点什么…', rows: '3' });
+    if (r[s.key]) ta.value = r[s.key];
+    ta.addEventListener('input', () => {
       const obj = ensureReplay(today);
-      obj[s.key] = (obj[s.key] || '') + (e.target.value === e.target.defaultValue ? '' : '');
+      obj[s.key] = ta.value;
       saveDB();
-      e.target.defaultValue = e.target.value;
-    }});
-    if (r[s.key]) { ta.defaultValue = r[s.key]; ta.value = r[s.key]; }
+    });
     area.appendChild(ta);
-    const addBtn = el('button', { class: 'kiss-add', onclick: () => {
-      const cur = ta.value.trim();
-      if (!cur) { toast('先写一条再继续'); return; }
-      const newLine = (cur.endsWith('\n') ? '' : '\n') + '• ';
-      ta.value = cur + newLine;
+    const tools = el('div', { class: 'kiss-tools' });
+    tools.appendChild(el('button', { class: 'kiss-add', onclick: () => {
+      const cur = ta.value;
+      const prefix = (cur && !cur.endsWith('\n')) ? '\n' : '';
+      ta.value = cur + prefix + '• ';
       ta.focus();
       const obj = ensureReplay(today);
       obj[s.key] = ta.value;
       saveDB();
-    }}, '+');
-    area.appendChild(addBtn);
+    } }, '+ 加一条'));
+    tools.appendChild(el('button', { class: 'kiss-clear', onclick: () => {
+      if (!ta.value) { toast('本项已是空的'); return; }
+      ta.value = '';
+      const obj = ensureReplay(today);
+      obj[s.key] = '';
+      saveDB();
+      toast('已清空');
+    } }, '清空'));
+    area.appendChild(tools);
     container.appendChild(area);
   });
   return container;
