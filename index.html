@@ -261,6 +261,7 @@
 .task-crumb { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: var(--text); }
 .task-crumb .tag { font-size: 12px; padding: 2px 8px; }
 .task-pane { display: grid; grid-template-columns: minmax(260px, 330px) 1fr; gap: 18px; }
+@media (max-width: 760px) { .task-pane { grid-template-columns: 1fr; } }
 
 .task-cal { padding: 14px; }
 .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -530,9 +531,8 @@
     .feature-grid { grid-template-columns: repeat(3, 1fr); }
     .habit-grid { grid-template-columns: 1fr; }
   }
-  @media (max-width: 767px) {
+  @media (max-width: 800px) {
     .app { grid-template-columns: 1fr; }
-    .task-pane { grid-template-columns: 1fr; }
     .sidebar { display: none; }
     .main { padding: 22px 16px 92px; }
     .greeting { margin: 14px 0 36px; }
@@ -623,12 +623,60 @@ const DEFAULT_DATA = {
 
 function cid() { return 'c' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
 
+/* ---------- 去重辅助：防止同步/顺延产生重复项目 ---------- */
+function _taskSignature(t) {
+  return JSON.stringify([
+    String(t.date || ''),
+    String(t.time || ''),
+    String(t.text || '').trim(),
+    String(t.carriedFrom || '')
+  ]);
+}
+function dedupTasks(arr) {
+  const seen = new Map();
+  const out = [];
+  for (const t of (arr || [])) {
+    const sig = _taskSignature(t);
+    const ex = seen.get(sig);
+    if (!ex) {
+      seen.set(sig, t);
+      out.push(t);
+      continue;
+    }
+    // 合并重复项：任一为完成则算完成；保留较新的时间戳
+    if (t.done && !ex.done) ex.done = true;
+    const tTs = t.updatedAt || t.createdAt || 0;
+    const eTs = ex.updatedAt || ex.createdAt || 0;
+    if (tTs > eTs) ex.updatedAt = tTs;
+  }
+  return out;
+}
+function _countdownSignature(c) {
+  return JSON.stringify([String(c.title || '').trim(), String(c.date || '')]);
+}
+function dedupCountdowns(arr) {
+  const seen = new Map();
+  const out = [];
+  for (const c of (arr || [])) {
+    const sig = _countdownSignature(c);
+    if (!seen.has(sig)) {
+      seen.set(sig, c);
+      out.push(c);
+    }
+  }
+  return out;
+}
+
 function loadDB() {
   try {
     const raw = localStorage.getItem(DB_KEY);
     if (!raw) return JSON.parse(JSON.stringify(DEFAULT_DATA));
     const data = JSON.parse(raw);
-    return { ...DEFAULT_DATA, ...data, profile: { ...DEFAULT_DATA.profile, ...(data.profile || {}) } };
+    const db = { ...DEFAULT_DATA, ...data, profile: { ...DEFAULT_DATA.profile, ...(data.profile || {}) } };
+    // 加载时清理历史重复（幂等，安全）
+    db.tasks = dedupTasks(db.tasks);
+    db.countdowns = dedupCountdowns(db.countdowns);
+    return db;
   } catch (e) { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
 }
 function saveDB() {
@@ -874,6 +922,9 @@ function mergeDB(local, remote) {
     profile: { ...DEFAULT_DATA.profile, ...(remote.profile || {}), ...(local.profile || {}) } };
   const listKeys = ['tasks', 'captures', 'countdowns', 'news', 'replay', 'media'];
   for (const k of listKeys) base[k] = _mergeList(local[k], remote[k], it => it && it.id);
+  // 按 id 合并后，再按语义去重（处理多设备各自创建同内容但不同 id 的项）
+  base.tasks = dedupTasks(base.tasks);
+  base.countdowns = dedupCountdowns(base.countdowns);
   const hmap = new Map();
   for (const h of (local.habits || [])) hmap.set(h.id, { ...h });
   for (const h of (remote.habits || [])) {
@@ -1159,6 +1210,11 @@ function addCountdown() {
   const t = $('#cdTitle').value.trim(); const d = $('#cdDate').value;
   if (!t) { toast('请填写事件标题'); return; }
   if (!d) { toast('请选择目标日期'); return; }
+  // 避免手动添加完全相同的倒数日
+  const sig = _countdownSignature({ title: t, date: d });
+  if (DB.countdowns.some(c => _countdownSignature(c) === sig)) {
+    toast('已存在相同的倒数日'); return;
+  }
   DB.countdowns.push({ id: cid(), title: t, date: d }); saveDB();
   $('#cdTitle').value = ''; $('#cdDate').value = ''; toggleCountdownAdd(); toast('已添加'); render();
 }
@@ -1179,26 +1235,56 @@ let TASK_VIEW = { year: 0, month: 0, day: '' }; // 0 表示"今天"
 function carryOverTasks() {
   const today = todayKey();
   let changed = false;
-  const toAdd = [];
+
+  // 0) 迁移老数据：给没有日期的任务补上日期
   DB.tasks.forEach(t => {
     if (!t.date) {
-      // 迁移老数据：日期从 createdAt 推断
       const d = t.createdAt ? new Date(t.createdAt) : new Date();
       t.date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       changed = true;
     }
-    if (t.date < today && !t.done) {
-      // 把过期未完成的任务顺延到今天（保留原日期作为 carriedFrom 标记）
-      toAdd.push({
-        id: cid(),
-        date: today,
-        time: t.time || '',
-        text: t.text,
-        done: false,
-        carriedFrom: t.date,
-        originId: t.id,
-        createdAt: Date.now()
-      });
+  });
+
+  // 1) 对历史未完成的顺延副本做跨天清理：每个原始任务只保留最近一个未完成的顺延副本
+  const latestCarried = new Map();
+  DB.tasks.forEach(t => {
+    if (t.carriedFrom && t.originId && !t.done) {
+      const cur = latestCarried.get(t.originId);
+      if (!cur || t.date > cur.date) latestCarried.set(t.originId, t);
+    }
+  });
+  const beforeLen = DB.tasks.length;
+  DB.tasks = DB.tasks.filter(t => {
+    if (!(t.carriedFrom && t.originId && !t.done)) return true;
+    return latestCarried.get(t.originId)?.id === t.id;
+  });
+  if (DB.tasks.length !== beforeLen) changed = true;
+
+  // 2) 同日同内容去重（防止同步/重复渲染导致同一日多个完全一样的任务）
+  const deduped = dedupTasks(DB.tasks);
+  if (deduped.length !== DB.tasks.length) { DB.tasks = deduped; changed = true; }
+
+  // 3) 顺延原始任务到今天：每个原始任务每天只生成一个顺延副本
+  const toAdd = [];
+  const todaySigs = new Set(DB.tasks.filter(t => t.date === today).map(_taskSignature));
+  DB.tasks.forEach(t => {
+    if (t.carriedFrom) return;                 // 顺延副本不再继续顺延
+    if (t.date >= today) return;               // 非过期任务
+    if (t.done) return;                        // 已完成的不顺延
+    const carried = {
+      id: cid(),
+      date: today,
+      time: t.time || '',
+      text: t.text,
+      done: false,
+      carriedFrom: t.date,
+      originId: t.id,
+      createdAt: Date.now()
+    };
+    const sig = _taskSignature(carried);
+    if (!todaySigs.has(sig)) {
+      toAdd.push(carried);
+      todaySigs.add(sig);
       changed = true;
     }
   });
